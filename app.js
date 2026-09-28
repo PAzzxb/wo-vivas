@@ -1965,7 +1965,7 @@ function card(v,i){
         return '<img loading="lazy" referrerpolicy="no-referrer" data-hg-poster="'+esc(enc)+'" style="opacity:0" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       }
       if(v.pic) return '<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(v.pic)+'" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
-      return '<div class="noimg">宝宝巴士</div>';
+      return '<div class="noimg"></div>';
     })()}
     ${statusTag}
     ${badgeHtml}
@@ -3468,7 +3468,7 @@ function chiguaParseArticle(seg, s){
   if(mr) remark=chiguaClean(mr[1]);
   return {
     title:title.slice(0,80), name:title.slice(0,80),
-    pic:pic, _sitePic:pic, _noTmdb:true,
+    pic:pic, _sitePic:pic, _noTmdb:true, _hgEncCover:!!pic, _hgPosterEnc:pic,
     remark:remark||(s&&s.name)||'吃瓜',
     href:'chigua://'+id,
     siteId:(s&&s.id)||'chigua51', siteName:(s&&s.name)||'吃瓜',
@@ -5708,7 +5708,7 @@ window._posterFail=function(img){
   const card=img.closest('.card'); if(!card)return;
   const poster=card.querySelector('.poster'); if(!poster)return;
   img.style.display='none';
-  if(!poster.querySelector('.noimg')){const ph=document.createElement('div');ph.className='noimg';ph.textContent='宝宝巴士';poster.insertBefore(ph,poster.firstChild)}
+  if(!poster.querySelector('.noimg')){const ph=document.createElement('div');ph.className='noimg';ph.textContent='';poster.insertBefore(ph,poster.firstChild)}
   const i=parseInt(card.dataset.i);
   if(!isNaN(i))posterFallback(i);
 };
