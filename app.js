@@ -2134,7 +2134,13 @@ function _infMaybe(reason){
 }
 // 追加新页后的海报增强：推迟到浏览器空闲帧执行，避免 TMDB 解析 + 图片替换抢在滚动帧里造成掉帧
 function _infEnhance(list,startOffset){
-  const run=()=>{ if(content&&content.dataset.mode==='category') enhanceGridPosters(list,startOffset); };
+  const run=()=>{
+    if(!(content&&content.dataset.mode==='category')) return;
+    enhanceGridPosters(list,startOffset);
+    // 追加的卡同样要跑 AES 封面解密：renderGrid 只给首屏那批调过 huangguoaiHydrateCovers，
+    // 漏掉这里会导致「第 1 页有图、往下翻全是空白」。
+    try{ if(list.some(function(v){return v&&v._hgEncCover;})) huangguoaiHydrateCovers(list,startOffset); }catch(e){}
+  };
   if(typeof requestIdleCallback==='function'){ try{ requestIdleCallback(run,{timeout:1600}); return; }catch(e){} }
   run();
 }
@@ -4113,7 +4119,12 @@ async function loadCategory(){
   if(location.hash==='#search') history.replaceState({wo:'home'},'',location.pathname+location.search);
   _clearSearchUI();
   try{renderSkeleton(12)}catch(eSk){content.innerHTML='<div class="empty is-loading">加载中…</div>';}
-  let s=site(),cat=activeCat,pg=page;
+  // activeCat 可能是上一个站的分类码（切站/自动切站路径不重置它），拼到新站的
+  // categoryUrl 上就是 404/403，一失败整屏被 catch 覆盖成「分类失败」——表现就是
+  // 「刚加载出封面又全变空白」。这里按当前站的有效分类校验一次，越界就落到首个真实分类。
+  let s=site();
+  if(!effCats(s).some(function(c){return c&&c[0]===activeCat;})) activeCat=firstRealCat(effCats(s));
+  let cat=activeCat,pg=page;
   try{
     let list=await fetchCatList(s,cat,pg);
     if(gen!==_catGen)return;   // 等待期间又切到了别的分类，这份结果作废，避免覆盖已显示的新内容
