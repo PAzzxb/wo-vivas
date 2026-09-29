@@ -1964,10 +1964,11 @@ function card(v,i){
         // 先不挂加密地址（会裂图），等解密后由 huangguoaiHydrateCovers 写入
         return '<img loading="lazy" referrerpolicy="no-referrer" data-hg-poster="'+esc(enc)+'" style="opacity:0" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       }
-      // 57吃瓜：CDN 校验 Referer，先占位再由 cg57HydrateCovers 拉成 blob 回填
+      // 57吃瓜：CDN 校验 Referer，用 fm.res 挂 Referer 的原生 src 直接显示（不裂图）
       const isCg57=!!(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0));
       if(isCg57&&enc&&!/^blob:/i.test(enc)&&!/^data:/i.test(enc)){
-        return '<img loading="lazy" referrerpolicy="no-referrer" data-cg57-poster="'+esc(enc)+'" style="opacity:0" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
+        const src=(typeof cg57CoverSrc==='function')?cg57CoverSrc(enc):enc;
+        return '<img loading="lazy" referrerpolicy="no-referrer" data-cg57-poster="'+esc(enc)+'" src="'+esc(src)+'" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       }
       if(v.pic) return '<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(v.pic)+'" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       return '<div class="noimg"></div>';
@@ -2328,9 +2329,12 @@ function renderGrid(list,pager,aggSearch){
   try{
     if(list.length && list.some(function(v){return v&&v._hgEncCover;})){
       huangguoaiHydrateCovers(list, 0);
-      try{ if(list.some(function(v){return v&&v.siteId==='chigua57';})) cg57HydrateCovers(list,0); }catch(e){}
     }
   }catch(eHg){}
+  // 57吃瓜：站源封面 CDN 校验 Referer，需带 Referer 拉成 blob 再显示（独立于黄果判断）
+  try{
+    if(list.length && list.some(function(v){return v&&v.siteId==='chigua57';})) cg57HydrateCovers(list,0);
+  }catch(eCg){}
 }
 /* 搜索结果增量更新：只追加新卡，不整屏 innerHTML 重绘，避免结果陆续到达时一闪一闪 */
 function updateSearchGrid(list,aggSearch){
@@ -3585,7 +3589,18 @@ async function chiguaDetail(v){
    详情：<h1>标题；<video data-hls-src="*.m3u8" data-fallback-src="*.mp4">；正文图 class含 max-h-[600px]
    图床/视频 CDN s.chigua.media 校验 Referer 必须 https://57cg4.com/ 否则 403 → 封面走 CG57 专属代理头 */
 const CG57_REFERER='https://57cg4.com/';
-/* 封面/图片字节：带 57 Referer 拉成 blob，绕开 CDN Referer 校验（复用 HG 队列但独立 Referer） */
+/* 封面直显：优先用原生 fm.res 给图片请求挂 Referer（同黄果明文封面做法），
+   原生层带 Referer 去取图即可绕过 CDN 的 403，不必自己下载再转 blob（更快、无裂图） */
+function cg57CoverSrc(url){
+  url=String(url||'').trim();
+  if(!url) return '';
+  if(/^blob:|^data:/i.test(url)) return url;
+  if(window.fm && fm.res){
+    try{ return fm.res(url,{headers:{'Referer':CG57_REFERER,'Accept':'image/*'}}); }catch(e){}
+  }
+  return url;
+}
+/* 封面/图片字节：带 57 Referer 拉成 blob（fm.res 不生效时的兜底，例如详情底图预处理） */
 const _cg57CoverCache={};
 function cg57FetchImage(url){
   url=String(url||'').trim();
@@ -3602,14 +3617,22 @@ function cg57FetchImage(url){
       return b;
     });
   }
-  return viaFm().then(function(buf){
+  function viaFmRes(){
+    if(!(window.fm&&fm.res&&fm.req)) return Promise.reject(new Error('no fm.res'));
+    const gate=fm.res(url,{headers:hdrs});
+    return fm.req(gate,{method:'GET',responseType:'arraybuffer',timeout:40}).then(function(r){
+      if(!r||!r.ok) throw new Error('fm.res HTTP '+(r&&r.status));
+      return r.body!=null?r.body:r.data;
+    });
+  }
+  return viaFm().catch(function(){ return viaFmRes(); }).then(function(buf){
     const raw=buf instanceof Uint8Array?buf:new Uint8Array(buf);
     if(!raw.length) throw new Error('empty img');
     const mime=(typeof hgDetectMime==='function'?hgDetectMime(raw):'')||'image/jpeg';
     const blob=URL.createObjectURL(new Blob([raw],{type:mime}));
     _cg57CoverCache[url]=blob;
     return blob;
-  }).catch(function(){ return url; });  // 拉不到就退回原链（有些环境 Referer 天然带对）
+  }).catch(function(){ return ''; });  // 失败返回空串，绝不回退 403 原链，避免裂图
 }
 /* 把卡片/详情里的封面批量转 blob 并回填 DOM（data-cg57-poster 标记） */
 function cg57ApplyPoster(enc,url){
@@ -3635,6 +3658,16 @@ function cg57HydrateCovers(list,startOffset){
     const cardEl=typeof content!=='undefined'&&content?content.querySelector('.card[data-i="'+i+'"]'):null;
     const img=cardEl&&cardEl.querySelector('.poster img');
     if(img){ img.setAttribute('data-cg57-poster',enc); }
+    // 首选：直接用 fm.res 挂 Referer 的原生 src，秒显不裂图
+    const direct=cg57CoverSrc(enc);
+    if(img && direct && direct!==enc){
+      img.style.opacity='1'; img.style.display='block'; img.onerror=null; img.src=direct;
+      img.removeAttribute('data-failed');
+      try{window._posterOk&&window._posterOk(img);}catch(e){}
+      v.pic=direct; v._decPic=direct;
+      return;
+    }
+    // 兜底：下载转 blob
     function show(u){
       if(!u) return;
       v.pic=u; v._decPic=u; v._sitePic=u;
