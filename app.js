@@ -3765,10 +3765,21 @@ async function cg57Detail(v){
     // 正文图（class 含 max-h-[600px] 的展示图）
     const imgs=[]; const reImg=/<img[^>]+src="(https?:\/\/[^"]+)"[^>]*class="[^"]*max-h-\[600px\][^"]*"/gi; let mi;
     while((mi=reImg.exec(html))){ if(imgs.indexOf(mi[1])<0) imgs.push(mi[1]); }
+    // 正文文字（<div class="space-y-3 ... text-zinc-300"> 里的 <p> 段落）
+    let bodyText='';
+    const mbody=html.match(/<div class="space-y-3[^"]*text-zinc-300[^"]*">([\s\S]*?)<\/div>/i);
+    if(mbody){
+      const paras=[]; const reP=/<p>([\s\S]*?)<\/p>/gi; let mp2;
+      while((mp2=reP.exec(mbody[1]))){ const t=cg57Clean(mp2[1]); if(t) paras.push(t); }
+      bodyText=paras.join('\n\n');
+    }
+    // 曝光时间（正文顶部的「首次曝光 …」）
+    let postTime='';
+    const mtime=html.match(/首次曝光[^<]*/); if(mtime) postTime=cg57Clean(mtime[0]);
     const cover=poster||info.pic||imgs[0]||'';
     info={
       title:title||info.title, pic:cover, _sitePic:cover, _cg57RawPic:cover, _noTmdb:true,
-      desc:'', siteName:s.name||'57吃瓜',
+      desc:bodyText||'', siteName:s.name||'57吃瓜',
       typeName:'57吃瓜', cls:'57吃瓜',
       _gallery:imgs
     };
@@ -3786,7 +3797,7 @@ async function cg57Detail(v){
       pans.push({
         name:'查看图集 · '+imgs.length+' 张', title:title||'图集',
         url:'cg57gallery://'+id, type:'图集', flag:'57吃瓜', siteName:s.name||'57吃瓜',
-        _imgGallery:true, _imgs:imgs, _chigua57:true
+        _imgGallery:true, _imgs:imgs, _text:bodyText, _postTime:postTime, _chigua57:true
       });
     }
   }catch(e){ console&&console.warn&&console.warn('[cg57 detail]',e); }
@@ -6273,7 +6284,7 @@ async function playPan(p){
   if(p._imgGallery || p.type==='图集' || /^cg57gallery:\/\//i.test(u)){
     try{
       const imgs=(p._imgs||[]).slice();
-      openImageGallery(filmTitle||p.title||'图集', imgs, (typeof cg57CoverSrc==='function')?cg57CoverSrc:null);
+      openImageGallery(filmTitle||p.title||'图集', imgs, (typeof cg57CoverSrc==='function')?cg57CoverSrc:null, {text:p._text||'', time:p._postTime||''});
     }catch(e){ console&&console.warn&&console.warn('[cg57 gallery]',e); }
     return;
   }
@@ -7964,10 +7975,12 @@ function closeBrowserHlsPlayer(){
   mask.style.display='none';
 }
 
-/* ===== 图集浏览器（57吃瓜等纯图文帖：逐张看图，带 Referer 显示）===== */
-function openImageGallery(title, imgs, srcFn){
+/* ===== 图集浏览器（57吃瓜等纯图文帖：逐张看图 + 正文文字，带 Referer 显示）===== */
+function openImageGallery(title, imgs, srcFn, extra){
   imgs=(imgs||[]).filter(Boolean);
-  if(!imgs.length){ try{toast('没有图片');}catch(e){ alert('没有图片'); } return; }
+  const bodyText=(extra&&extra.text)||'';
+  const postTime=(extra&&extra.time)||'';
+  if(!imgs.length && !bodyText){ try{toast('没有内容');}catch(e){ alert('没有内容'); } return; }
   let mask=document.getElementById('imgGalleryMask');
   if(!mask){
     mask=document.createElement('div');
@@ -7981,6 +7994,10 @@ function openImageGallery(title, imgs, srcFn){
 #imgGalleryMask .ig-close{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 #imgGalleryMask .ig-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px calc(var(--safe-bottom,0px) + 20px);-webkit-overflow-scrolling:touch}
 #imgGalleryMask .ig-img{width:100%;display:block;margin:0 auto 10px;border-radius:10px;background:#111;min-height:60px}
+#imgGalleryMask .ig-time{color:rgba(255,255,255,.45);font-size:12px;margin:2px 2px 12px}
+#imgGalleryMask .ig-text{color:rgba(255,255,255,.82);font-size:15px;line-height:1.75;margin:4px 2px 18px;white-space:pre-wrap;word-break:break-word}
+#imgGalleryMask .ig-text.top{margin-top:2px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+#imgGalleryMask .ig-sec{color:rgba(255,255,255,.5);font-size:12px;font-weight:600;margin:6px 2px 10px;letter-spacing:.5px}
 #imgGalleryMask .ig-tip{color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:8px 0 20px}
 </style>
 <div class="ig-top"><div class="ig-title"></div><div class="ig-count"></div><button class="ig-close" type="button" aria-label="关闭">×</button></div>
@@ -7990,13 +8007,26 @@ function openImageGallery(title, imgs, srcFn){
   }
   mask.style.display='flex';
   mask.querySelector('.ig-title').textContent=title||'图集';
-  mask.querySelector('.ig-count').textContent=imgs.length+' 张';
+  mask.querySelector('.ig-count').textContent=imgs.length?(imgs.length+' 张'):'';
   const scroll=mask.querySelector('.ig-scroll');
   scroll.scrollTop=0;
-  scroll.innerHTML=imgs.map(function(u){
-    const src=(typeof srcFn==='function')?srcFn(u):u;
-    return '<img class="ig-img" loading="lazy" referrerpolicy="no-referrer" src="'+String(src).replace(/"/g,'&quot;')+'">';
-  }).join('')+'<div class="ig-tip">— 共 '+imgs.length+' 张 —</div>';
+  const esc2=function(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  let html='';
+  // 先图集，正文文字放在图集下面（按用户要求）
+  if(imgs.length){
+    html+=imgs.map(function(u){
+      const src=(typeof srcFn==='function')?srcFn(u):u;
+      return '<img class="ig-img" loading="lazy" referrerpolicy="no-referrer" src="'+String(src).replace(/"/g,'&quot;')+'">';
+    }).join('');
+  }
+  if(bodyText){
+    if(imgs.length) html+='<div class="ig-sec">帖子正文</div>';
+    if(postTime) html+='<div class="ig-time">'+esc2(postTime)+'</div>';
+    html+='<div class="ig-text">'+esc2(bodyText)+'</div>';
+  }else if(imgs.length){
+    html+='<div class="ig-tip">— 共 '+imgs.length+' 张 —</div>';
+  }
+  scroll.innerHTML=html;
 }
 function closeImageGallery(){
   const mask=document.getElementById('imgGalleryMask');
