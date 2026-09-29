@@ -190,7 +190,7 @@ let searchKwHistory = (()=>{try{return JSON.parse(localStorage.getItem(STORAGE_K
 if(window.fongmiBridge||window.fm)document.documentElement.classList.add('fm-native');
 const SITES=[{id:'wanou',name:'玩偶',domains:['https://woggpan.888484.xyz','https://woggpan.xxooo.cf','https://www.wogg.net','https://wogg.xxooo.cf'],listSelector:'.module-item',searchListSelector:'.module-search-item',detailPanSelector:'.module-row-info p',categoryUrl:'/vodshow/{categoryId}--------{page}---.html',searchUrl:'/vodsearch/-------------.html?wd={keyword}&page={page}',cats:[['history','最近'],['44','臻彩'],['1','电影'],['2','电视剧'],['3','动漫'],['4','综艺'],['5','音乐'],['6','短剧'],['46','纪录片']],catGroups:{'1':[['1','全部'],['1---喜剧','喜剧'],['1---爱情','爱情'],['1---动作','动作'],['1---科幻','科幻'],['1---剧情','剧情'],['1---恐怖','恐怖'],['1---悬疑','悬疑'],['1---犯罪','犯罪'],['1---惊悚','惊悚'],['1---战争','战争'],['1---古装','古装'],['1---奇幻','奇幻']],'2':[['2','全部'],['2---古装','古装'],['2---都市','都市'],['2---家庭','家庭'],['2---喜剧','喜剧'],['2---悬疑','悬疑'],['2---犯罪','犯罪'],['2---青春偶像','青春偶像'],['2---剧情','剧情'],['2---动作','动作']],'3':[['3','全部'],['3---热血','热血'],['3---搞笑','搞笑'],['3---校园','校园'],['3---冒险','冒险'],['3---科幻','科幻'],['3---推理','推理'],['3---情感','情感'],['3---动作','动作']],'4':[['4','全部'],['4---选秀','选秀'],['4---综艺','综艺'],['4---音乐','音乐'],['4---美食','美食'],['4---游戏','游戏']]}},{id:'muou',name:'木偶',domains:['https://www.muou.site','https://www.muou.asia','https://666.666291.xyz','https://123.666291.xyz'],listSelector:'#main .module-item',searchListSelector:'.module-search-item',detailPanSelector:'.module-row-info p',cats:[['25','臻选'],['1','电影'],['2','电视剧'],['3','动漫'],['4','纪录片'],['29','综艺'],['30','原盘']]},{id:'shandian',name:'闪电',domains:['http://sd.sduc.site','http://shandian.blog'],listSelector:'#main .module-item',searchListSelector:'.module-search-item',detailPanSelector:'.module-row-info p',categoryUrl:'/index.php/vod/show/id/{categoryId}/page/{page}.html',searchUrl:'/index.php/vod/search/page/{page}/wd/{keyword}.html',cats:[['1','电影'],['2','剧集'],['3','综艺'],['4','动漫'],['30','短剧']]},{id:'duoduo',name:'多多',domains:['https://tv.yydsys.cc','https://yydsys.de5.net','https://tv.214521.xyz','https://tv.yydsys.top'],listSelector:'.module-item',searchListSelector:'.module-search-item',detailPanSelector:'.module-row-info p',cats:[['1','电影'],['2','剧集'],['3','综艺'],['4','动漫'],['5','短剧'],['20','纪录']]},{id:'zhainan',name:'至臻',domains:['https://v.time1080.xyz'],listSelector:'a.card,.grid .card',searchListSelector:'a.card,.grid .card',detailPanSelector:'.res-list a,.weui-cells a,a[href]',categoryUrl:'/c/{categoryId}.html',searchUrl:'/s.php?wd={keyword}',cats:[['history','最近'],['电影','电影'],['电视剧','电视剧'],['动漫','动漫'],['综艺','综艺'],['短剧','短剧']]},{id:'huban',name:'米字',domains:['https://mizixing.com'],listSelector:'article.excerpt',searchListSelector:'article.excerpt',detailPanSelector:'a[href*="pan.quark"],a[href*="pan.baidu"],a[href*="pan.xunlei"],a[href*="aliyundrive"],a[href*="115.com"],a[href*="quark.cn"]',categoryUrl:'/category/{categoryId}/page/{page}/',searchUrl:'/?s={keyword}',cats:[['电影','电影'],['电视剧','电视剧'],['动漫','动漫'],['综艺节目','综艺'],['纪录片','纪录片'],['音乐MTV','音乐']]},{id:'huajuan',name:'花卷',domains:['https://www.hjzhencai.top'],listSelector:'.module-item',searchListSelector:'.module-card-item',detailPanSelector:'a.down-card-url',searchUrl:'/index.php/vod/search/page/{page}/wd/{keyword}.html',cats:[['22','高帧'],['1','电影'],['2','剧集'],['3','动漫'],['23','AI短剧'],['21','综艺']]},{id:'dyyjv',name:'云集',type:'flarum',domains:['https://bbs.dyyjv.com'],pageSize:20,categoryUrl:'/api/discussions?filter%5Btag%5D={categoryId}&page%5Blimit%5D=20&page%5Boffset%5D={offset}&include=firstPost',searchUrl:'/?q={keyword}',cats:[['Movie','电影'],['TVplay','剧集'],['dongman','动漫'],['Variety','综艺'],['duanju','短剧']]},{id:'renren',name:'人人',domains:['https://www.rrdynb.com'],listSelector:'#movielist li',searchListSelector:'#movielist li,.stui-vodlist li',categoryUrl:'/plus/list.php?tid={categoryId}&PageNo={page}',searchUrl:'/plus/search.php?q={keyword}',cats:[['2','电影'],['6','剧集'],['13','动漫'],['10','老电影']]},{id:'hdhive',name:'鸟巢',type:'hdhive',catalogUrl:'https://gh-proxy.com/https://raw.githubusercontent.com/longmingfudi/voxlinepg/refs/heads/main/catalog.json',domains:['https://gh-proxy.com','https://raw.githubusercontent.com','https://cdn.jsdelivr.net'],cats:[['history','最近'],['movie','电影'],['tv','剧集'],['anime','动漫'],['variety','综艺'],['quark','夸克'],['115','115'],['ali','阿里'],['tianyi','天翼'],['baidu','百度']],pageSize:24},{id:'fangkong',name:'放空',hidden:true,domains:['https://fangkong.cc'],listSelector:'.list a.item',searchListSelector:'.list a.item',detailPanSelector:'a[href*="pan.quark"],a[href*="pan.baidu"],a[href*="pan.xunlei"],a[href*="aliyundrive"],a[href*="115.com"],a[href*="quark.cn"],a[href*="caiyun"]',categoryUrl:'/',searchUrl:'/s/{keyword}.html',listStyle:'list',cats:[['home','最近']]}, {id:'ouge',name:'讴歌',domains:['https://woog.nxog.eu.org','https://woog.430520.xyz','https://woog.nxog.fun'],listSelector:'#main .module-item',searchListSelector:'.module-search-item',detailPanSelector:'.module-row-info p',cats:[['1','电影'],['2','电视剧'],['3','动漫'],['4','综艺'],['5','短剧'],['21','综合']]},
 {id:'xb6v',name:'星河',panBlockRE:'6v123\\.com|6v520\\.tv|xb6v\\.com|66ss\\.org',domains:['https://www.xb6v.com','https://www.66ss.org'],listSelector:'li.post',searchListSelector:'li.post',titleSelector:'.article_container h1',noAutoCats:true,searchMethod:'post',searchUrl:'/e/search/so.php',searchBody:'show=title&tempid=1&tbname=article&mid=1&dopost=search&keyboard={keyword}',categoryUrl:'/{categoryId}/index_{page}.html',cats:[['movie','电影'],['dianshiju','剧集'],['donghuapian','动画'],['jilupian','纪录'],['ZongYi','综艺']],catGroups:{movie:[['xijupian','喜剧'],['dongzuopian','动作'],['aiqingpian','爱情'],['kehuanpian','科幻'],['kongbupian','恐怖'],['juqingpian','剧情'],['zhanzhengpian','战争']],dianshiju:[['dianshiju/guoju','国剧'],['dianshiju/rihanju','日韩'],['dianshiju/oumeiju','欧美'],['dianshiju/duanju','短剧']]}},{id:'madou',name:'麻豆',hidden:true,domains:['https://madou.club'],onlineOnly:true,listSelector:'article.excerpt',searchListSelector:'article.excerpt',titleSelector:'h1.article-title,h1',detailPanSelector:'a[href]',noAutoCats:true,categoryUrl:'/category/{categoryId}/page/{page}',searchUrl:'/?s={keyword}',cats:[['麻豆传媒','麻豆传媒'],['hongkongdoll','HongKongDoll'],['果冻传媒','果冻传媒'],['蜜桃影像','蜜桃影像'],['天美传媒','天美传媒'],['精东影业','精东影业'],['91制片厂','91制片厂'],['皇家华人','皇家华人'],['兔子先生','兔子先生'],['星空无限传媒','星空无限'],['爱豆','爱豆'],['麻豆导演系列','导演系列'],['大象传媒','大象传媒'],['猫爪影像','猫爪影像'],['杏吧','杏吧'],['乐播传媒','乐播传媒'],['psychoporntw','PsychoPorn'],['麻豆番外篇','番外篇'],['麻豆花絮','花絮']]},{id:'jinpai',name:'金牌',type:'jinpai',onlineOnly:true,domains:['https://ghw9zwp5.com'],apiBase:'https://ghw9zwp5.com/api/mw-movie',apiHosts:['https://ghw9zwp5.com/api/mw-movie','https://ghw9zwp5.com/mw-movie','https://ady.wxojcopfw.com/mw-movie'],noAutoCats:true,listSelector:'a.content-card',categoryUrl:'/vod/show/id/{categoryId}/page/{page}',cats:[['1','电影'],['2','电视剧'],['3','综艺'],['4','动漫'],['88','短剧']]},{id:'gz360',name:'瓜子',type:'gz360',onlineOnly:true,domains:['https://gz360.tv'],apiBase:'https://api.gudvxty.com',noAutoCats:true,cats:[['p1','热门'],['p5','动漫'],['p62344','漫剧'],['p3','电影'],['p4','国产剧'],['p16','短剧'],['p6','综艺'],['p23656','海外剧'],['p26916','儿童']],catGroups:{'p5':[['p5','全部'],['g50','冒险'],['g51','热血'],['g52','搞笑'],['g53','爱情'],['g54','推理'],['g55','竞技'],['g56','益智'],['g57','童话'],['g58','经典'],['g60','奇幻'],['g61','校园'],['g62','励志'],['g63','剧情'],['g64','后宫'],['g65','青春'],['g94','动作'],['g95','喜剧'],['g96','科幻'],['g97','悬疑'],['g98','动画']],'p3':[['p3','全部'],['g1','惊悚'],['g2','悬疑'],['g3','科幻'],['g4','罪案'],['g5','灾难'],['g6','动画'],['g7','古装'],['g8','青春'],['g9','恐怖'],['g10','文艺'],['g11','生活'],['g12','历史'],['g13','励志'],['g66','喜剧'],['g68','冒险'],['g69','纪录片'],['g71','爱情'],['g77','犯罪'],['g82','剧情'],['g83','家庭'],['g84','动作'],['g86','奇幻'],['g87','战争'],['g88','同性'],['g93','武侠']],'p4':[['p4','全部'],['g15','爱情'],['g16','都市'],['g17','家庭'],['g18','生活'],['g19','偶像'],['g20','喜剧'],['g21','历史'],['g22','古装'],['g23','武侠'],['g24','刑侦'],['g25','战争'],['g26','神话'],['g27','谍战'],['g28','宫斗'],['g29','剧情'],['g30','奇幻'],['g31','科幻'],['g32','悬疑'],['g36','犯罪'],['g37','动作']],'p6':[['p6','全部'],['g39','脱口秀'],['g40','真人秀'],['g41','选秀'],['g42','情感'],['g43','访谈'],['g44','时尚'],['g45','晚会'],['g47','益智'],['g48','音乐'],['g49','游戏'],['g75','职场']],'p23656':[['p23656','全部'],['g15','爱情'],['g16','都市'],['g17','家庭'],['g19','偶像'],['g20','喜剧'],['g29','剧情'],['g30','奇幻'],['g31','科幻'],['g32','悬疑'],['g36','犯罪'],['g37','动作']],'p26916':[['p26916','全部'],['g50','冒险'],['g51','热血'],['g52','搞笑'],['g57','童话'],['g58','经典'],['g60','奇幻'],['g61','校园']]}},{id:'huangguoai',name:'黄果',type:'huangguoai',onlineOnly:true,domains:['https://huangguoai.com'],apiBase:'https://huangguoai.com',noAutoCats:true,cats:[['hot','热门'],['new','最新'],['rank','排行榜'],['ai-duanju','AI成人短剧'],['ai-manju','AI成人漫剧'],['ai-huanlian','AI换脸'],['ai-mogai','AI魔改'],['tag:dushi','都市'],['tag:xiandai','现代'],['tag:xiaoyuan','校园'],['tag:shunv','熟女'],['tag:haomen','豪门'],['tag:hougong','后宫'],['tag:luanlun','乱伦'],['tag:gufeng','古风'],['tag:qihuan','奇幻'],['tag:zhichang','职场'],['tag:yulequan','娱乐圈'],['tag:tianchong','甜宠'],['tag:nianxia','年下']]},
-{id:'chigua51',name:'吃瓜',type:'chigua',onlineOnly:true,domains:['https://chigua.com','https://m5vnd.jfsqqphbp.cc','https://245m0.jgkzdvwfo.cc'],noAutoCats:true,cats:[['wpcz','今日吃瓜'],['rdsj','热门大瓜'],['bkdg','必看大瓜'],['mrdg','吃瓜榜单'],['whhl','网红黑料'],['whmx','明星爆料'],['xsxy','学生校园'],['hwcg','海外吃瓜'],['rrcg','人人吃瓜'],['ldcg','领导干部'],['snsn','骚男骚女'],['jpll','软萌甜妹'],['thjx','探花精选'],['whhj','网黄合集'],['dcbq','擦边撩骚'],['qubk','吃瓜看戏'],['sjb','竞技吃瓜'],['cgxw','吃瓜新闻'],['yczq','原创博主'],['cbdj','AI成人短剧'],['ysyl','成人视频'],['mrds','每日大赛'],['lldd','伦理道德'],['gcjq','国产视频'],['zzs','性爱技巧'],['51djc','51剧场'],['51hd','往期活动']]}];
+{id:'chigua51',name:'吃瓜',type:'chigua',onlineOnly:true,domains:['https://chigua.com','https://m5vnd.jfsqqphbp.cc','https://245m0.jgkzdvwfo.cc'],noAutoCats:true,cats:[['wpcz','今日吃瓜'],['rdsj','热门大瓜'],['bkdg','必看大瓜'],['mrdg','吃瓜榜单'],['whhl','网红黑料'],['whmx','明星爆料'],['xsxy','学生校园'],['hwcg','海外吃瓜'],['rrcg','人人吃瓜'],['ldcg','领导干部'],['snsn','骚男骚女'],['jpll','软萌甜妹'],['thjx','探花精选'],['whhj','网黄合集'],['dcbq','擦边撩骚'],['qubk','吃瓜看戏'],['sjb','竞技吃瓜'],['cgxw','吃瓜新闻'],['yczq','原创博主'],['cbdj','AI成人短剧'],['ysyl','成人视频'],['mrds','每日大赛'],['lldd','伦理道德'],['gcjq','国产视频'],['zzs','性爱技巧'],['51djc','51剧场'],['51hd','往期活动']]},{id:'chigua57',name:'57吃瓜',type:'chigua57',onlineOnly:true,domains:['https://57cg4.com','https://57chigua.co','https://57chigua.com','https://57cg1.com','https://57cg2.com','https://57cg3.com','https://57cg5.com','https://57cg6.com','https://57cg7.com','https://57cg9.com','https://aidujuc.cc','https://d2tu7000ico5j0.cloudfront.net'],noAutoCats:true,cats:[['all','全部'],['hot','热门'],['aichengduanju','成人AI短剧'],['jrcg','今日吃瓜'],['mrds','每日大赛'],['wanghong','网红黑料'],['video','网黄合集'],['cheating','出轨劈腿'],['live','直播擦边'],['society','社会事件'],['star','明星八卦']]}];
 /* 站源域名自定义：持久化覆盖，保存后立即生效，无需改代码 */
 const SITE_DOMAINS_DEFAULT={};
 SITES.forEach(s=>{ SITE_DOMAINS_DEFAULT[s.id]=(s.domains||[]).slice(); });
@@ -1964,6 +1964,11 @@ function card(v,i){
         // 先不挂加密地址（会裂图），等解密后由 huangguoaiHydrateCovers 写入
         return '<img loading="lazy" referrerpolicy="no-referrer" data-hg-poster="'+esc(enc)+'" style="opacity:0" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       }
+      // 57吃瓜：CDN 校验 Referer，先占位再由 cg57HydrateCovers 拉成 blob 回填
+      const isCg57=!!(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0));
+      if(isCg57&&enc&&!/^blob:/i.test(enc)&&!/^data:/i.test(enc)){
+        return '<img loading="lazy" referrerpolicy="no-referrer" data-cg57-poster="'+esc(enc)+'" style="opacity:0" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
+      }
       if(v.pic) return '<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(v.pic)+'" onload="window._posterOk&&window._posterOk(this)" onerror="window._posterFail&&window._posterFail(this)">';
       return '<div class="noimg"></div>';
     })()}
@@ -2140,6 +2145,7 @@ function _infEnhance(list,startOffset){
     // 追加的卡同样要跑 AES 封面解密：renderGrid 只给首屏那批调过 huangguoaiHydrateCovers，
     // 漏掉这里会导致「第 1 页有图、往下翻全是空白」。
     try{ if(list.some(function(v){return v&&v._hgEncCover;})) huangguoaiHydrateCovers(list,startOffset); }catch(e){}
+    try{ if(list.some(function(v){return v&&v.siteId==='chigua57';})) cg57HydrateCovers(list,startOffset); }catch(e){}
   };
   if(typeof requestIdleCallback==='function'){ try{ requestIdleCallback(run,{timeout:1600}); return; }catch(e){} }
   run();
@@ -2322,6 +2328,7 @@ function renderGrid(list,pager,aggSearch){
   try{
     if(list.length && list.some(function(v){return v&&v._hgEncCover;})){
       huangguoaiHydrateCovers(list, 0);
+      try{ if(list.some(function(v){return v&&v.siteId==='chigua57';})) cg57HydrateCovers(list,0); }catch(e){}
     }
   }catch(eHg){}
 }
@@ -2371,6 +2378,7 @@ function updateSearchGrid(list,aggSearch){
   const added=list.slice(prev);
   if(added.length) enhanceGridPosters(added, prev);
   try{ if(added.length && added.some(function(v){return v&&v._hgEncCover;})) huangguoaiHydrateCovers(added, prev); }catch(eHg2){}
+  try{ if(added.length && added.some(function(v){return v&&v.siteId==='chigua57';})) cg57HydrateCovers(added, prev); }catch(eCg){}
 }
 function catUrl(s,c,p){
   // 中文分类 id（如宅男 /c/电影.html）需要 URL 编码；玩偶二级「1---喜剧」只编码中文段
@@ -3571,6 +3579,179 @@ async function chiguaDetail(v){
   return {info,pans,filmTitle:info.title};
 }
 
+/* ===== 57吃瓜（57cg4.com，SSR 站，与 51吃瓜 Typecho 完全不同）适配 =====
+   列表：/{slug}/{page}/  首页全部 /{page}/  热门 /hot/  搜索 /search/?q=kw
+   卡片：<a href="/events/{id}/" class="group block..."> 内 <img src=CDN> + <h2>标题 + span.text-red-400 分类
+   详情：<h1>标题；<video data-hls-src="*.m3u8" data-fallback-src="*.mp4">；正文图 class含 max-h-[600px]
+   图床/视频 CDN s.chigua.media 校验 Referer 必须 https://57cg4.com/ 否则 403 → 封面走 CG57 专属代理头 */
+const CG57_REFERER='https://57cg4.com/';
+/* 封面/图片字节：带 57 Referer 拉成 blob，绕开 CDN Referer 校验（复用 HG 队列但独立 Referer） */
+const _cg57CoverCache={};
+function cg57FetchImage(url){
+  url=String(url||'').trim();
+  if(!url) return Promise.resolve('');
+  if(/^blob:/i.test(url)||/^data:/i.test(url)) return Promise.resolve(url);
+  if(_cg57CoverCache[url]) return Promise.resolve(_cg57CoverCache[url]);
+  const hdrs={'User-Agent':'Mozilla/5.0','Accept':'image/*,*/*','Referer':CG57_REFERER};
+  function viaFm(){
+    if(!(window.fm&&fm.req)) return Promise.reject(new Error('no fm'));
+    return fm.req(url,{method:'GET',responseType:'arraybuffer',timeout:40,headers:hdrs}).then(function(r){
+      if(!r||!r.ok) throw new Error('fm HTTP '+(r&&r.status));
+      const b=r.body!=null?r.body:r.data;
+      if(b==null) throw new Error('empty');
+      return b;
+    });
+  }
+  return viaFm().then(function(buf){
+    const raw=buf instanceof Uint8Array?buf:new Uint8Array(buf);
+    if(!raw.length) throw new Error('empty img');
+    const mime=(typeof hgDetectMime==='function'?hgDetectMime(raw):'')||'image/jpeg';
+    const blob=URL.createObjectURL(new Blob([raw],{type:mime}));
+    _cg57CoverCache[url]=blob;
+    return blob;
+  }).catch(function(){ return url; });  // 拉不到就退回原链（有些环境 Referer 天然带对）
+}
+/* 把卡片/详情里的封面批量转 blob 并回填 DOM（data-cg57-poster 标记） */
+function cg57ApplyPoster(enc,url){
+  if(!enc||!url) return;
+  try{
+    const nodes=document.querySelectorAll('img[data-cg57-poster]');
+    for(let i=0;i<nodes.length;i++){
+      const img=nodes[i];
+      if(img.getAttribute('data-cg57-poster')!==enc) continue;
+      img.style.opacity='1'; img.style.display='block';
+      img.src=url; img.setAttribute('data-cg57-done','1');
+    }
+  }catch(e){}
+}
+function cg57HydrateCovers(list,startOffset){
+  if(!list||!list.length) return;
+  const base=startOffset|0;
+  list.forEach(function(v,local){
+    if(!v||v.siteId!=='chigua57') return;
+    const enc=v._cg57RawPic||v._sitePic||'';
+    if(!enc||/^blob:/i.test(enc)||/^data:/i.test(enc)) return;
+    const i=base+local;
+    const cardEl=typeof content!=='undefined'&&content?content.querySelector('.card[data-i="'+i+'"]'):null;
+    const img=cardEl&&cardEl.querySelector('.poster img');
+    if(img){ img.setAttribute('data-cg57-poster',enc); }
+    function show(u){
+      if(!u) return;
+      v.pic=u; v._decPic=u; v._sitePic=u;
+      cg57ApplyPoster(enc,u);
+      if(img){ img.style.opacity='1'; img.style.display='block'; img.onerror=null; img.src=u; img.removeAttribute('data-failed'); try{window._posterOk&&window._posterOk(img);}catch(e){} }
+    }
+    if(_cg57CoverCache[enc]){ show(_cg57CoverCache[enc]); return; }
+    setTimeout(function(){ cg57FetchImage(enc).then(function(u){ if(u) show(u); },function(){}); }, local*40);
+  });
+}
+function cg57Clean(t){ return String(t||'').replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,' ').replace(/\s+/g,' ').trim(); }
+/* 解析一张 <a class="group block..."> 卡片 */
+function cg57ParseCard(seg){
+  const mh=seg.match(/href="\/events\/(\d+)\/?"/i);
+  if(!mh) return null;
+  const id=mh[1];
+  let title='';
+  const mt=seg.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
+  if(mt) title=cg57Clean(mt[1]);
+  if(!title){ const mi=seg.match(/<img[^>]+alt="([^"]+)"/i); if(mi) title=cg57Clean(mi[1]); }
+  if(!title) return null;
+  let pic='';
+  const mp=seg.match(/<img[^>]+src="(https?:\/\/[^"]+)"/i);
+  if(mp) pic=mp[1];
+  let cat='';
+  const mc=seg.match(/text-red-400[^>]*>([^<]+)</i);
+  if(mc) cat=cg57Clean(mc[1]);
+  const hot=/热搜\s*HOT/i.test(seg);
+  return {
+    title:title.slice(0,80), name:title.slice(0,80),
+    pic:'', _sitePic:pic, _cg57RawPic:pic, _noTmdb:true,
+    remark:(cat||'')+(hot?'·热':''),
+    href:'chigua57://'+id,
+    siteId:'chigua57', siteName:'57吃瓜',
+    _online:true, _chigua57Id:id
+  };
+}
+function cg57ParseCards(html){
+  const out=[]; const seen=new Set();
+  const re=/<a href="\/events\/\d+\/?"[\s\S]*?<\/a>/gi; let m;
+  while((m=re.exec(html))){
+    const c=cg57ParseCard(m[0]);
+    if(c && !seen.has(c._chigua57Id)){ seen.add(c._chigua57Id); out.push(c); }
+  }
+  return out;
+}
+async function cg57List(s,cat,pg){
+  const page=Math.max(1,pg|0);
+  const code=String(cat||'all').trim();
+  let path;
+  if(code==='all'||code===''){ path=page>1?('/page/'+page+'/'):'/'; }
+  else if(code==='hot'){ path='/hot/'; }
+  else { path='/'+encodeURIComponent(code)+'/'+(page>1?(page+'/'):''); }
+  const r=await get(s,path,16,false);
+  return cg57ParseCards(r.html).slice(0,60);
+}
+async function cg57Search(s,q){
+  const kw=String(q||'').trim();
+  if(!kw) return [];
+  const out=[]; const seen=new Set();
+  for(let page=1; page<=3 && out.length<40; page++){
+    const path='/search/?q='+encodeURIComponent(kw)+(page>1?('&page='+page):'');
+    let r;
+    try{ r=await get(s,path,14,true); }catch(e){ break; }
+    const cards=cg57ParseCards(r.html);
+    if(!cards.length) break;
+    for(const c of cards){ if(!seen.has(c._chigua57Id)){ seen.add(c._chigua57Id); out.push(c); } }
+    if(cards.length<10) break;
+  }
+  return out.slice(0,40);
+}
+async function cg57Detail(v){
+  const id=String((v&&(v._chigua57Id||(String(v.href||'').replace(/^chigua57:\/\//,''))))||'').trim();
+  const s=SITES.find(x=>x.id==='chigua57')||{name:'57吃瓜',domains:['https://57cg4.com']};
+  let info={title:(v&&v.title)||'',pic:(v&&(v._sitePic||v.pic))||'',desc:'',siteName:s.name||'57吃瓜',_noTmdb:true};
+  let pans=[];
+  if(!id) return {info,pans,filmTitle:info.title};
+  try{
+    const r=await get(s,'/events/'+encodeURIComponent(id)+'/',16,true);
+    const html=r.html||'';
+    let title=info.title;
+    const mt=html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if(mt) title=cg57Clean(mt[1]);
+    else { const mtt=html.match(/<title>([^<|]+)/i); if(mtt) title=cg57Clean(mtt[1]); }
+    // 视频：<video data-hls-src=*.m3u8 data-fallback-src=*.mp4 poster=*.jpg>
+    let video='', poster='';
+    const mv=html.match(/<video[\s\S]*?<\/video>/i)||html.match(/<video[^>]*>/i);
+    if(mv){
+      const vseg=mv[0];
+      const mh=vseg.match(/data-hls-src="([^"]+\.m3u8[^"]*)"/i); if(mh) video=mh[1];
+      const mf=vseg.match(/data-fallback-src="([^"]+\.mp4[^"]*)"/i); if(!video&&mf) video=mf[1];
+      const mp=vseg.match(/poster="([^"]+)"/i); if(mp) poster=mp[1];
+    }
+    if(!video){ const mm=html.match(/https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*/i); if(mm) video=mm[0]; }
+    // 正文图（class 含 max-h-[600px] 的展示图）
+    const imgs=[]; const reImg=/<img[^>]+src="(https?:\/\/[^"]+)"[^>]*class="[^"]*max-h-\[600px\][^"]*"/gi; let mi;
+    while((mi=reImg.exec(html))){ if(imgs.indexOf(mi[1])<0) imgs.push(mi[1]); }
+    const cover=poster||info.pic||imgs[0]||'';
+    info={
+      title:title||info.title, pic:cover, _sitePic:cover, _cg57RawPic:cover, _noTmdb:true,
+      desc:'', siteName:s.name||'57吃瓜',
+      typeName:'57吃瓜', cls:'57吃瓜',
+      _gallery:imgs
+    };
+    if(cover && v){ v._sitePic=cover; v._cg57RawPic=cover; v._noTmdb=true; }
+    if(video){
+      pans.push({
+        name:'在线播放', title:title||'在线播放', url:video,
+        type:'最高画质', flag:'57吃瓜', siteName:s.name||'57吃瓜',
+        _online:true, _chigua57:true
+      });
+    }
+    if(imgs.length && !video){ info.desc='共 '+imgs.length+' 张图片'; }
+  }catch(e){ console&&console.warn&&console.warn('[cg57 detail]',e); }
+  return {info,pans,filmTitle:info.title};
+}
+
 async function gz360List(s,cat,pg){
   const page=Math.max(1,pg|0);
   const id=String(cat||'p1');
@@ -4097,6 +4278,7 @@ async function fetchCatList(s,cat,pg){
   if(s.type==='jinpai'||s.id==='jinpai') return jinpaiList(s,cat,pg);
   if(s.type==='huangguoai'||s.id==='huangguoai') return huangguoaiList(s,cat,pg);
   if(s.type==='chigua'||s.id==='chigua51') return chiguaList(s,cat,pg);
+  if(s.type==='chigua57'||s.id==='chigua57') return cg57List(s,cat,pg);
   if(s.type==='hdhive') return hdhiveList(s,cat,pg);
   const r=await get(s,catUrl(s,cat,pg));
   if(s.type==='flarum') return flarumCards(r.html,s,r.base).slice(0,60);
@@ -4170,6 +4352,7 @@ async function searchSite(s,q,timeoutSec=16){
   if(s.type==='jinpai'||s.id==='jinpai') return jinpaiSearch(s,q);
   if(s.type==='huangguoai'||s.id==='huangguoai') return huangguoaiSearch(s,q);
   if(s.type==='chigua'||s.id==='chigua51') return chiguaSearch(s,q);
+  if(s.type==='chigua57'||s.id==='chigua57') return cg57Search(s,q);
   const ekw=encodeURIComponent(q);
   if(s.type==='hdhive') return hdhiveSearchList(s,q);
   // 论坛站：走公开 JSON 接口（/?q= 是前端渲染，抓 HTML 搜不到东西）
@@ -6169,7 +6352,8 @@ async function playPan(p){
 
     // 站源名：优先资源/条目上的 siteName，再按 id 映射，避免播放页「站源」空白
     const isHuangguoai=!!(p._huangguoai || p.siteName==='黄果' || pageUrl.indexOf('huangguoai://')===0 || item.siteId==='huangguoai' || /huangguoai\.com/i.test(u));
-    const siteIdMap={jinpai:'金牌',gz360:'瓜子',madou:'麻豆',huangguoai:'黄果',chigua51:'吃瓜'};
+    const isCg57=!!(p._chigua57 || p.siteName==='57吃瓜' || pageUrl.indexOf('chigua57://')===0 || item.siteId==='chigua57' || /chigua\.media/i.test(u));
+    const siteIdMap={jinpai:'金牌',gz360:'瓜子',madou:'麻豆',huangguoai:'黄果',chigua51:'吃瓜',chigua57:'57吃瓜'};
     let flagName=(p.siteName||item.siteName||siteIdMap[item.siteId]||'').trim();
     if(!flagName){
       if(isJinpai) flagName='金牌';
@@ -6188,7 +6372,7 @@ async function playPan(p){
     if(!isJinpai){
       hdr={
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Referer': isGz ? 'https://gz360.tv/' : (isMadou ? 'https://madou.club/' : (isHuangguoai ? 'https://huangguoai.com/' : 'https://www.google.com/'))
+        'Referer': isGz ? 'https://gz360.tv/' : (isMadou ? 'https://madou.club/' : (isHuangguoai ? 'https://huangguoai.com/' : (isCg57 ? CG57_REFERER : 'https://www.google.com/')))
       };
     }
     const playUrlJoined=epList.map(e=>e.name+'$'+e.url).join('#');
@@ -6403,6 +6587,7 @@ async function parseDetail(v){
   if(v&&(v.siteId==='jinpai'||(v.href&&String(v.href).indexOf('jinpai://')===0))) return jinpaiDetail(v);
   if(v&&(v.siteId==='huangguoai'||(v.href&&String(v.href).indexOf('huangguoai://')===0))) return huangguoaiDetail(v);
   if(v&&(v.siteId==='chigua51'||v._chiguaId||(v.href&&String(v.href).indexOf('chigua://')===0))) return chiguaDetail(v);
+  if(v&&(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0))) return cg57Detail(v);
   if(v&&(v.siteId==='hdhive'||v._hdhive||(v.href&&String(v.href).indexOf('hdhive://')===0))){
     if(!v._hdhive&&_hdhiveCache&&_hdhiveCache.items){
       try{const k=decodeURIComponent(String(v.href||'').replace(/^hdhive:\/\//,''));const hit=_hdhiveCache.items.find(x=>x.k===k||x.n===v.title);if(hit)v._hdhive=hit}catch(e){}
@@ -6674,7 +6859,7 @@ async function _loadDetailContent(v){
   try{
     // 进详情立刻启动盘搜（与详情解析并行），尽早备好可播兜底
     // 纯在线源：跳过盘搜，把带宽留给预热播放
-    const _isPureOnlineDetail=!!(v&&(v.siteId==='huangguoai'||(v.href&&String(v.href).indexOf('huangguoai://')===0)||v._huangguoaiId||v.siteId==='chigua51'||v._chiguaId||(v.href&&String(v.href).indexOf('chigua://')===0)));
+    const _isPureOnlineDetail=!!(v&&(v.siteId==='huangguoai'||(v.href&&String(v.href).indexOf('huangguoai://')===0)||v._huangguoaiId||v.siteId==='chigua51'||v._chiguaId||(v.href&&String(v.href).indexOf('chigua://')===0)||v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0)));
     const _earlyPanKw=_isPureOnlineDetail?'':panKeyword(v.title||v.name||'');
     const _earlyPanPromise=_earlyPanKw
       ? panSearchWithRetry(_earlyPanKw).catch(function(){return []})
@@ -6689,6 +6874,14 @@ async function _loadDetailContent(v){
         const enc=pickAttachedPoster(v, true) || v._sitePic || v.pic || null;
         if(!enc) return null;
         if(/^blob:|^data:/i.test(enc)) return enc;
+        // 57吃瓜：图床校验 Referer，用专属拉取（不走 HG 解密）
+        if(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0)){
+          try{
+            const cb=await cg57FetchImage(enc);
+            if(cb){ v.pic=cb; v._decPic=cb; return cb; }
+          }catch(eC){}
+          return enc;
+        }
         try{
           const dec=await hgDecryptPoster(enc);
           if(dec){ v.pic=dec; v._decPic=dec; return dec; }
