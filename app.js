@@ -1898,6 +1898,50 @@ function renderSubChips(s,grp){
   if(a) requestAnimationFrame(function(){ centerChipInScroller(a); });
   bindNavHScrolls();
 }
+// ===== 全部分类弹层：田字格按钮弹出，网格陈列当前站源所有分类 =====
+function _catSheetItems(){
+  const s=site();
+  // effCats 含 history/fav 等伪分类，过滤掉只留真实分类
+  return (effCats(s)||[]).filter(c=>c&&c[0]!=='history'&&c[0]!=='history_all'&&c[0]!=='fav');
+}
+function renderCatSheet(){
+  const grid=document.getElementById('catSheetGrid'); if(!grid)return;
+  const items=_catSheetItems();
+  const grp=catGroupOf(site(),activeCat);
+  grid.innerHTML=items.map(c=>{
+    const on=(activeCat===c[0]||grp===c[0])?' active':'';
+    return `<button type="button" class="cat-cell${on}" data-id="${c[0]}">${c[1]}</button>`;
+  }).join('');
+  grid.querySelectorAll('.cat-cell').forEach(b=>b.onclick=()=>{
+    activateCategory(b.dataset.id);
+    closeCatSheet();
+  });
+}
+function openCatSheet(){
+  const mask=document.getElementById('catSheetMask');
+  const sheet=document.getElementById('catSheet');
+  if(!mask||!sheet)return;
+  try{ const t=document.getElementById('catSheetTitle'); if(t){ const s=site(); t.textContent=((s&&s.name)?s.name+' · ':'')+'分类'; } }catch(e){}
+  renderCatSheet();
+  mask.hidden=false; sheet.hidden=false;
+  requestAnimationFrame(()=>{ mask.classList.add('show'); sheet.classList.add('show'); });
+}
+function closeCatSheet(){
+  const mask=document.getElementById('catSheetMask');
+  const sheet=document.getElementById('catSheet');
+  if(!mask||!sheet)return;
+  mask.classList.remove('show'); sheet.classList.remove('show');
+  setTimeout(()=>{ mask.hidden=true; sheet.hidden=true; },280);
+}
+(function bindCatSheet(){
+  const btn=document.getElementById('catGridToggle');
+  const mask=document.getElementById('catSheetMask');
+  const closeBtn=document.getElementById('catSheetClose');
+  if(btn) btn.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); openCatSheet(); });
+  if(mask) mask.addEventListener('click',closeCatSheet);
+  if(closeBtn) closeBtn.addEventListener('click',closeCatSheet);
+})();
+
 // 切换分类（点击胶囊 / 左右滑动都走这里）。slideDir：'l' 右滑出现下一类，'r' 左滑出现上一类
 function activateCategory(id,slideDir){
   if(id==null)return;
