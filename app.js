@@ -1882,7 +1882,7 @@ function renderChips(){
   chips.innerHTML=cats.map(c=>`<button class="chip ${(activeCat===c[0]||grp===c[0])?'active':''}" data-id="${c[0]}">${c[1]}</button>`).join('');
   chips.querySelectorAll('.chip').forEach(b=>b.onclick=()=>activateCategory(b.dataset.id));
   const act=chips.querySelector('.chip.active');
-  if(act) requestAnimationFrame(function(){ centerChipInScroller(act); });
+  if(act && !_suppressChipCenter) requestAnimationFrame(function(){ centerChipInScroller(act); });
   renderSubChips(s,grp);
   bindNavHScrolls();
 }
@@ -1895,10 +1895,13 @@ function renderSubChips(s,grp){
   row.innerHTML=items.map(c=>`<button type="button" class="chip ${activeCat===c[0]?'active':''}" data-id="${c[0]}">${c[1]}</button>`).join('');
   row.querySelectorAll('.chip').forEach(b=>b.onclick=()=>activateCategory(b.dataset.id));
   const a=row.querySelector('.chip.active');
-  if(a) requestAnimationFrame(function(){ centerChipInScroller(a); });
+  if(a && !_suppressChipCenter) requestAnimationFrame(function(){ centerChipInScroller(a); });
   bindNavHScrolls();
 }
 // ===== 全部分类弹层：田字格按钮弹出，网格陈列当前站源所有分类（含二级分类） =====
+// 从弹层选分类时置 true：抑制 renderChips/renderSubChips 的「自动把选中项滚到可视中央」，
+// 避免顶部分类胶囊条跟着跳动（用户只想换内容，不想顶部横条滚位）。
+let _suppressChipCenter=false;
 function _catSheetItems(){
   const s=site();
   // effCats 含 history/fav 等伪分类，过滤掉只留真实分类
@@ -1939,7 +1942,10 @@ function renderCatSheet(){
     grid.innerHTML=html;
   }
   grid.querySelectorAll('.cat-cell').forEach(b=>b.onclick=()=>{
-    activateCategory(b.dataset.id);
+    // 从弹层选分类：切换内容但不让顶部分类条自动滚位
+    _suppressChipCenter=true;
+    try{ activateCategory(b.dataset.id); }
+    finally{ setTimeout(()=>{ _suppressChipCenter=false; }, 60); }
     closeCatSheet();
   });
 }
