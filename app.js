@@ -197,7 +197,7 @@ SITES.forEach(s=>{ SITE_DOMAINS_DEFAULT[s.id]=(s.domains||[]).slice(); });
 const SITE_DOMAIN_OVERRIDES=(()=>{try{return JSON.parse(localStorage.getItem('wo_site_domains')||'{}')}catch(e){return {}}})();
 /* 可选站源开关：麻豆默认关闭，通用设置里打开后显示在站源列表 */
 /* 瓜子 / 麻豆 / 黄果 / 黄果：仅在「非大陆 IP」或「疑似 VPN/代理」时显示，大陆直连默认隐藏 */
-const OVERSEAS_SITE_IDS=['madou','gz360','huangguoai','xvideos'];
+const OVERSEAS_SITE_IDS=['madou','gz360','huangguoai','xvideos','chigua51'];
 // 实时网络探测结果（不落盘缓存，每次启动重新检测）
 let _netAccessShow=false;   // 默认隐藏，探测完成后再决定
 let _netAccessReady=false;
