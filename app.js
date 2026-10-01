@@ -3982,10 +3982,37 @@ async function xvDetail(v){
     const cover=poster||info.pic||'';
     info={ title:title||info.title, pic:cover, _sitePic:cover, _noTmdb:true, desc:'', siteName:'XV', typeName:'XVIDEOS', cls:'XV' };
     if(cover && v){ v._sitePic=cover; v._noTmdb=true; }
-    // 播放线路：HLS 优先（CDN 带 CORS *，可直接播），再附 mp4 高/低清
-    if(hls){ pans.push({name:'HLS 自适应', title:title||'在线播放', url:hls, type:'HLS', flag:'XV', siteName:'XV', _online:true, _xvideos:true}); }
-    if(high){ pans.push({name:'高清 MP4', title:title||'高清', url:high, type:'MP4', flag:'XV', siteName:'XV', _online:true, _xvideos:true}); }
-    if(low && low!==high){ pans.push({name:'标清 MP4', title:title||'标清', url:low, type:'MP4', flag:'XV', siteName:'XV', _online:true, _xvideos:true}); }
+    // 分辨率拉满：setVideoUrlHigh 只有 360p，真正的 1080p/720p 藏在 HLS master 里。
+    // 拉 master m3u8 解析各档位，按分辨率从高到低生成独立线路，最高画质排第一（= 默认播放）。
+    let variants=[];
+    if(hls){
+      try{
+        const mr=await get(s,hls,12,true);
+        const m3u8=mr.html||'';
+        const base=hls.replace(/[^/]*$/,'');     // master 所在目录
+        const re=/#EXT-X-STREAM-INF:[^\n]*?RESOLUTION=(\d+)x(\d+)[^\n]*?(?:NAME="([^"]*)")?[^\n]*\n([^\n#]+)/gi;
+        let mm;
+        while((mm=re.exec(m3u8))){
+          const w=parseInt(mm[1],10), h=parseInt(mm[2],10);
+          const label=(mm[3]&&mm[3].trim())||(h+'p');
+          let vu=mm[4].trim();
+          if(!/^https?:/i.test(vu)) vu=base+vu;
+          variants.push({h,w,label,url:vu});
+        }
+        variants.sort((a,b)=>b.h-a.h);           // 高→低
+      }catch(eV){}
+    }
+    // 播放线路：优先逐档 HLS（最高画质在最前 = 默认），再给「自适应」兜底，最后 mp4 低清兜底
+    if(variants.length){
+      variants.forEach((vv,i)=>{
+        pans.push({ name:vv.label+(i===0?' ·最高':''), title:(title||'在线播放')+' '+vv.label, url:vv.url, type:vv.label, flag:'XV', siteName:'XV', _online:true, _xvideos:true });
+      });
+      if(hls){ pans.push({ name:'HLS 自适应', title:title||'自适应', url:hls, type:'自适应', flag:'XV', siteName:'XV', _online:true, _xvideos:true }); }
+    } else if(hls){
+      pans.push({ name:'HLS 自适应', title:title||'在线播放', url:hls, type:'HLS', flag:'XV', siteName:'XV', _online:true, _xvideos:true });
+    }
+    if(high){ pans.push({name:'MP4 360p', title:title||'标清', url:high, type:'MP4', flag:'XV', siteName:'XV', _online:true, _xvideos:true}); }
+    if(low && low!==high){ pans.push({name:'MP4 240p', title:title||'省流', url:low, type:'MP4', flag:'XV', siteName:'XV', _online:true, _xvideos:true}); }
   }catch(e){ console&&console.warn&&console.warn('[xv detail]',e); }
   return {info,pans,filmTitle:info.title};
 }
