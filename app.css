@@ -1394,6 +1394,23 @@ html.nav-mode-top .nav-filter .chip.active{
 }
 .cat-sheet-grid .cat-cell.active{ color:#111;font-weight:700;background:#fff; }
 .cat-sheet-grid .cat-cell:active{ opacity:.75; }
+
+/* 分组模式：一级分类标题 + 子分类网格（玩偶/瓜子/星河等有二级分类的站源） */
+.cat-sheet-grid.grouped{
+  display:block;
+}
+.cat-sheet-grid.grouped .cat-sec-title{
+  font-size:14px;font-weight:700;color:rgba(255,255,255,.95);
+  padding:12px 2px 8px;
+}
+.cat-sheet-grid.grouped .cat-sec-title.parent-active{ color:#7fd1ff; }
+.cat-sheet-grid.grouped .cat-sheet-sub{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:4px;
+}
+.cat-sheet-grid.grouped .cat-sec-title:first-child{ padding-top:2px; }
 /* 二级分类行：定宽容器横滑 + iOS 惯性/回弹 */
 .subchips{
   display:flex;gap:8px;align-items:center;

@@ -1898,7 +1898,7 @@ function renderSubChips(s,grp){
   if(a) requestAnimationFrame(function(){ centerChipInScroller(a); });
   bindNavHScrolls();
 }
-// ===== 全部分类弹层：田字格按钮弹出，网格陈列当前站源所有分类 =====
+// ===== 全部分类弹层：田字格按钮弹出，网格陈列当前站源所有分类（含二级分类） =====
 function _catSheetItems(){
   const s=site();
   // effCats 含 history/fav 等伪分类，过滤掉只留真实分类
@@ -1906,12 +1906,38 @@ function _catSheetItems(){
 }
 function renderCatSheet(){
   const grid=document.getElementById('catSheetGrid'); if(!grid)return;
+  const s=site();
   const items=_catSheetItems();
-  const grp=catGroupOf(site(),activeCat);
-  grid.innerHTML=items.map(c=>{
-    const on=(activeCat===c[0]||grp===c[0])?' active':'';
-    return `<button type="button" class="cat-cell${on}" data-id="${c[0]}">${c[1]}</button>`;
-  }).join('');
+  const grp=catGroupOf(s,activeCat);
+  const groups=(s&&s.catGroups)||{};
+  const anySub=items.some(c=>groups[c[0]]&&groups[c[0]].length);
+  const cell=(id,label)=>`<button type="button" class="cat-cell${(activeCat===id)?' active':''}" data-id="${id}">${label}</button>`;
+  if(!anySub){
+    // 纯网格：一格一分类（XV / 吃瓜 / 黄果 / 麻豆 等无二级分类的站源）
+    grid.className='cat-sheet-grid';
+    grid.innerHTML=items.map(c=>{
+      const on=(activeCat===c[0]||grp===c[0])?' active':'';
+      return `<button type="button" class="cat-cell${on}" data-id="${c[0]}">${c[1]}</button>`;
+    }).join('');
+  } else {
+    // 分组模式：有二级分类的一级项 → 标题 + 子网格；连续的无二级项攒成一个子网格
+    grid.className='cat-sheet-grid grouped';
+    let html=''; let buf=[];
+    const flushBuf=()=>{ if(buf.length){ html+=`<div class="cat-sheet-sub">`+buf.map(c=>cell(c[0],c[1])).join('')+`</div>`; buf=[]; } };
+    items.forEach(c=>{
+      const sub=groups[c[0]];
+      if(sub&&sub.length){
+        flushBuf();
+        const pa=(grp===c[0])?' parent-active':'';
+        html+=`<div class="cat-sec-title${pa}">${c[1]}</div>`;
+        html+=`<div class="cat-sheet-sub">`+sub.map(sc=>cell(sc[0],sc[1])).join('')+`</div>`;
+      } else {
+        buf.push(c);
+      }
+    });
+    flushBuf();
+    grid.innerHTML=html;
+  }
   grid.querySelectorAll('.cat-cell').forEach(b=>b.onclick=()=>{
     activateCategory(b.dataset.id);
     closeCatSheet();
