@@ -1330,11 +1330,11 @@ html.nav-mode-top .nav-filter .chip.active{
 }
 .chip:active{ opacity:.72; }
 
-/* 分类行末尾「全部分类」按钮（田字格），固定不随 chips 滚动 */
+/* 分类行开头「分类」按钮（列表图标），固定不随 chips 滚动 */
 .cat-grid-toggle{
   flex-shrink:0;
   width:36px;height:36px;
-  margin-left:4px;
+  margin-right:4px;
   display:inline-flex;align-items:center;justify-content:center;
   border:none;border-radius:999px;
   background:rgba(255,255,255,.12);
