@@ -7423,7 +7423,6 @@ async function _loadDetailContent(v){
   <div class="det-res-tabs">
     <button class="det-res-tab active" data-tab="netdisk" type="button">网盘资源<em>${d.pans.length||0}</em></button>
     <button class="det-res-tab" data-tab="pansou" type="button">盘搜资源</button>
-    <button class="det-res-tab" data-tab="showpaw" type="button">Showpaw</button>
   </div>
   <button id="panCfgBtn" class="pan-cfg-btn" title="盘搜设置（地址 + 网盘类型）">⚙</button>
 </div>
@@ -7433,9 +7432,6 @@ ${_netdiskHtml}
   </div>
   <div class="det-res-pane" data-pane="pansou" hidden>
     <div class="pan-search-box" id="panSearchBox"><div class="pan-search-status">正在聚合搜索网盘…</div></div>
-  </div>
-  <div class="det-res-pane" data-pane="showpaw" hidden>
-    <div class="pan-search-box" id="showpawBox"><div class="pan-search-status">正在匹配 Showpaw 资源…</div></div>
   </div>
 </div>
 </section>
@@ -7710,8 +7706,6 @@ ${_netdiskHtml}
         panBox.innerHTML='<div class="pan-search-status">盘搜失败：'+esc(e&&e.message||'网络错误')+'</div>';
       });
     }
-    const spBox=$('#showpawBox');
-    if(spBox&&panKw) startShowpawSearch(spBox,panKw);
     const panCfgBtn=$('#panCfgBtn');
     if(panCfgBtn) panCfgBtn.onclick=async(e)=>{
       e.stopPropagation();
@@ -7724,91 +7718,226 @@ ${_netdiskHtml}
   }
 }
 // ===== 盘搜（PanSou 聚合网盘搜索）=====
+const PAN_DEFAULT_API='https://so.252035.xyz';
 const PAN_CONFIG={
-  apiBase:'https://so.252035.xyz',
-  diskTypes:['quark','aliyun','baidu','uc','tianyi','xunlei','123','115','mobile','guangya','magnet','ed2k']
+  apiBase:PAN_DEFAULT_API,
+  diskTypes:['quark','baidu','uc'],
+  panChannels:[],
+  panPlugins:[]
 };
 try{ const saved=localStorage.getItem('wo_pan_api'); if(saved) PAN_CONFIG.apiBase=saved; }catch(e){}
 try{ const t=JSON.parse(localStorage.getItem('wo_pan_types')||'null'); if(Array.isArray(t)&&t.length) PAN_CONFIG.diskTypes=t; }catch(e){}
-// 一次性迁移：把新增类型补进老用户已保存的选择里（每个类型只补一次，之后尊重用户勾选）
-try{
-  if(localStorage.getItem('wo_pan_types')){
-    let migrated=[]; try{migrated=JSON.parse(localStorage.getItem('wo_pan_types_migrated')||'[]')}catch(_){}
-    if(!Array.isArray(migrated))migrated=[];
-    // 兼容旧的磁力迁移标记：视为 magnet/ed2k 已迁移
-    if(localStorage.getItem('wo_pan_magnet_migrated')==='1'){['magnet','ed2k'].forEach(t=>{if(migrated.indexOf(t)===-1)migrated.push(t)})}
-    let changed=false;
-    ['magnet','ed2k','guangya'].forEach(t=>{
-      if(migrated.indexOf(t)===-1){
-        if(PAN_CONFIG.diskTypes.indexOf(t)===-1){PAN_CONFIG.diskTypes.push(t);changed=true}
-        migrated.push(t);
-      }
-    });
-    if(changed) localStorage.setItem('wo_pan_types',JSON.stringify(PAN_CONFIG.diskTypes));
-    localStorage.setItem('wo_pan_types_migrated',JSON.stringify(migrated));
-  }
-}catch(e){}
+try{ const c=JSON.parse(localStorage.getItem('wo_pan_channels')||'null'); if(Array.isArray(c)) PAN_CONFIG.panChannels=c; }catch(e){}
+try{ const p=JSON.parse(localStorage.getItem('wo_pan_plugins')||'null'); if(Array.isArray(p)) PAN_CONFIG.panPlugins=p; }catch(e){}
 // 全部可选网盘类型（顺序即弹窗里的排列顺序）
 const PAN_ALL_TYPES=['quark','aliyun','baidu','uc','tianyi','xunlei','123','115','mobile','guangya','magnet','ed2k'];
+const PAN_SOURCE_CONFIG={channels:[],plugins:[]};
+try{
+  const cache=JSON.parse(localStorage.getItem('wo_pan_source_cache')||'{}');
+  if(Array.isArray(cache.channels))PAN_SOURCE_CONFIG.channels=cache.channels;
+  if(Array.isArray(cache.plugins))PAN_SOURCE_CONFIG.plugins=cache.plugins;
+}catch(e){}
 const PAN_TYPE_LABEL={quark:'夸克',aliyun:'阿里',baidu:'百度',uc:'UC',tianyi:'天翼',xunlei:'迅雷',123:'123',115:'115',mobile:'移动',guangya:'光鸭',magnet:'磁力',ed2k:'电驴'};
 // 123 网盘不参与有效性检测：不亮路灯、不做失效过滤，始终保留显示；其余网盘照旧检测
 const PAN_CHECK_TYPES=new Set(['aliyun','quark','uc','baidu','tianyi','xunlei','115','mobile']);
 function panTypeLabel(t){return PAN_TYPE_LABEL[t]||t||'网盘'}
 // 盘搜设置弹窗：接口地址 + 网盘类型多选；确定后写入本地存储，返回 true 表示已保存
 function openPanConfig(){
-  return new Promise(resolve=>{
-    const mask=$('#panCfgMask'),input=$('#panCfgInput'),okBtn=$('#panCfgOk'),cancelBtn=$('#panCfgCancel');
+  return new Promise(async resolve=>{
+    const mask=$('#panCfgMask'),input=$('#panCfgInput'),okBtn=$('#panCfgOk'),cancelBtn=$('#panCfgCancel'),resetBtn=$('#panCfgReset');
     const titleEl=mask&&mask.querySelector('.custom-modal-title');
-    const typeCfg=$('#panTypeCfg'),grid=$('#panTypeGrid'),allBtn=$('#panTypeAll');
+    const sourceCfg=$('#panSourceCfg'),tabs=$('#panSourceTabs'),listEl=$('#panSourceList');
+    const sourceTitle=$('#panSourceTitle'),allBtn=$('#panSourceAll'),refreshBtn=$('#panSourceRefresh');
+    const channelCount=$('#panChannelCount'),pluginCount=$('#panPluginCount'),typeCount=$('#panTypeCount');
+    const urlHistory=$('#panUrlHistory');
     if(!mask){resolve(false);return}
     if(titleEl) titleEl.textContent='盘搜设置';
     input.value=PAN_CONFIG.apiBase||'';
-    const sel=new Set(PAN_CONFIG.diskTypes);
-    function paintAll(){ allBtn.textContent = sel.size>=PAN_ALL_TYPES.length ? '全不选' : '全选'; }
-    if(typeCfg) typeCfg.style.display='block';
-    grid.innerHTML=PAN_ALL_TYPES.map(t=>
-      `<button type="button" class="pan-type-chip${sel.has(t)?' on':''}" data-t="${esc(t)}">`
-      +`<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`
-      +`<span>${esc(panTypeLabel(t))}</span></button>`).join('');
-    grid.querySelectorAll('.pan-type-chip').forEach(chip=>{
-      chip.onclick=()=>{
-        const t=chip.dataset.t;
-        if(sel.has(t))sel.delete(t);else sel.add(t);
-        chip.classList.toggle('on',sel.has(t));
-        paintAll();
-      };
-    });
-    allBtn.onclick=()=>{
-      if(sel.size>=PAN_ALL_TYPES.length)sel.clear();
-      else PAN_ALL_TYPES.forEach(t=>sel.add(t));
-      grid.querySelectorAll('.pan-type-chip').forEach(c=>c.classList.toggle('on',sel.has(c.dataset.t)));
-      paintAll();
+    if(urlHistory){
+      urlHistory.querySelectorAll('.pan-url-item').forEach(item=>{
+        item.onclick=()=>{input.value=item.textContent.trim();};
+      });
+      input.onfocus=()=>urlHistory.classList.add('show');
+      input.onblur=()=>{setTimeout(()=>urlHistory.classList.remove('show'),150);};
+    }
+
+    if(sourceCfg) sourceCfg.style.display='block';
+    if(mask.querySelector('#panTypeCfg')) mask.querySelector('#panTypeCfg').style.display='none';
+
+    let activePane='channels';
+    let channelList=Array.isArray(PAN_SOURCE_CONFIG.channels)?PAN_SOURCE_CONFIG.channels.slice():[];
+    let pluginList=Array.isArray(PAN_SOURCE_CONFIG.plugins)?PAN_SOURCE_CONFIG.plugins.slice():[];
+    let channelSel=new Set(PAN_CONFIG.panChannels||[]);
+    let pluginSel=new Set(PAN_CONFIG.panPlugins||[]);
+    let typeSel=new Set(PAN_CONFIG.diskTypes);
+
+    const normalizeNames=(v)=>{
+      if(!Array.isArray(v))return [];
+      return v.map(x=>{
+        if(typeof x==='string')return x.trim();
+        if(x&&typeof x==='object')return String(x.name||x.id||x.channel||x.plugin||'').trim();
+        return '';
+      }).filter(Boolean);
     };
-    paintAll();
+
+    const setDefaultsFromHealth=()=>{
+      // TG频道和搜索插件永久默认全部勾选：忽略旧的取消记录，每次打开设置都恢复全选。
+      channelSel=new Set(channelList);
+      pluginSel=new Set(pluginList);
+      try{localStorage.setItem('wo_pan_channels',JSON.stringify(channelList));}catch(e){}
+      try{localStorage.setItem('wo_pan_plugins',JSON.stringify(pluginList));}catch(e){}
+    };
+
+    const updateCounts=()=>{
+      if(channelCount)channelCount.textContent=`${channelSel.size} / ${channelList.length}`;
+      if(pluginCount)pluginCount.textContent=`${pluginSel.size} / ${pluginList.length}`;
+      if(typeCount)typeCount.textContent=`${typeSel.size} / ${PAN_ALL_TYPES.length}`;
+    };
+
+    const paneData=()=>{
+      if(activePane==='channels')return {title:'TG 频道配置',items:channelList,sel:channelSel,key:'channel'};
+      if(activePane==='plugins')return {title:'搜索插件',items:pluginList,sel:pluginSel,key:'plugin'};
+      return {title:'网盘类型',items:PAN_ALL_TYPES.map(x=>panTypeLabel(x)),raw:PAN_ALL_TYPES,sel:typeSel,key:'type'};
+    };
+
+    const renderPane=()=>{
+      const d=paneData();
+      if(sourceTitle)sourceTitle.textContent=d.title;
+      if(!listEl)return;
+      if(!d.items.length){
+        listEl.innerHTML='<div class="pan-source-empty">暂无可用项目，点击“刷新”重新读取 PanSou 服务。</div>';
+      }else{
+        const raw=d.raw||d.items;
+        listEl.innerHTML='<div class="pan-source-grid">'+d.items.map((name,i)=>{
+          const key=raw[i];
+          const on=d.sel.has(key);
+          return `<button type="button" class="pan-source-chip${on?' on':''}" data-k="${esc(key)}"><span class="source-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="source-name" title="${esc(name)}">${esc(name)}</span></button>`;
+        }).join('')+'</div>';
+        listEl.querySelectorAll('.pan-source-chip').forEach(chip=>{
+          chip.onclick=()=>{
+            const key=chip.dataset.k;
+            if(d.sel.has(key))d.sel.delete(key);else d.sel.add(key);
+            chip.classList.toggle('on',d.sel.has(key));
+            updateCounts();
+            updateAllButton();
+          };
+        });
+      }
+      updateCounts();
+      updateAllButton();
+    };
+
+    const updateAllButton=()=>{
+      const d=paneData();
+      const all=d.items.length>0 && d.sel.size>=d.items.length;
+      if(allBtn)allBtn.textContent=all?'全不选':'全选';
+    };
+
+    const loadHealth=async()=>{
+      if(listEl)listEl.innerHTML='<div class="pan-source-loading">正在读取 PanSou 的 TG 频道和搜索插件…</div>';
+      try{
+        let d=null;
+        const fm=await fmReady();
+        const url=panApi('/api/health');
+        if(fm&&fm.req){
+          const r=await fm.req(url,{method:'GET',responseType:'json',timeout:12});
+          if(!r.ok)throw new Error(r.error||('HTTP '+r.status));
+          d=typeof r.body==='string'?JSON.parse(r.body):r.body;
+        }else{
+          const r=await fetch(url,{cache:'no-store'});
+          if(!r.ok)throw new Error('HTTP '+r.status);
+          d=await r.json();
+        }
+        const root=(d&&d.data&&typeof d.data==='object')?d.data:d||{};
+        const ch=normalizeNames(root.channels);
+        const pl=normalizeNames(root.plugins);
+        if(ch.length)channelList=ch;
+        if(pl.length)pluginList=pl;
+        PAN_SOURCE_CONFIG.channels=channelList.slice();
+        PAN_SOURCE_CONFIG.plugins=pluginList.slice();
+        try{
+          localStorage.setItem('wo_pan_source_cache',JSON.stringify({channels:channelList,plugins:pluginList}));
+        }catch(e){}
+        setDefaultsFromHealth();
+        renderPane();
+      }catch(e){
+        try{
+          const cache=JSON.parse(localStorage.getItem('wo_pan_source_cache')||'{}');
+          if(!channelList.length)channelList=normalizeNames(cache.channels);
+          if(!pluginList.length)pluginList=normalizeNames(cache.plugins);
+        }catch(_){}
+        setDefaultsFromHealth();
+        renderPane();
+        if(!channelList.length&&!pluginList.length&&listEl){
+          listEl.innerHTML='<div class="pan-source-empty">无法读取 PanSou 配置，请检查接口地址是否可用。</div>';
+        }
+      }
+    };
+
+    const switchPane=(pane)=>{
+      activePane=pane;
+      tabs&&tabs.querySelectorAll('.pan-source-tab').forEach(t=>t.classList.toggle('on',t.dataset.pane===pane));
+      renderPane();
+    };
+    tabs&&tabs.querySelectorAll('.pan-source-tab').forEach(t=>{
+      t.onclick=()=>switchPane(t.dataset.pane||'channels');
+    });
+    if(allBtn)allBtn.onclick=()=>{
+      const d=paneData();
+      const all=d.items.length>0&&d.sel.size>=d.items.length;
+      if(all)d.sel.clear();else d.items.forEach((_,i)=>d.sel.add((d.raw||d.items)[i]));
+      renderPane();
+    };
+    if(refreshBtn)refreshBtn.onclick=()=>loadHealth();
+
+    setDefaultsFromHealth();
+    updateCounts();
+    renderPane();
     mask.classList.add('show');
-    requestAnimationFrame(()=>{input.focus()});
+    await loadHealth();
+
     let done=false;
     const finish=(ok)=>{
       if(done)return;done=true;
       mask.classList.remove('show');
-      okBtn.onclick=null;cancelBtn.onclick=null;mask.onclick=null;input.onkeydown=null;allBtn.onclick=null;
+      okBtn.onclick=null;cancelBtn.onclick=null;mask.onclick=null;input.onkeydown=null;input.onfocus=null;input.onblur=null;
+      if(refreshBtn)refreshBtn.onclick=null;
+      if(allBtn)allBtn.onclick=null;
+      if(tabs)tabs.querySelectorAll('.pan-source-tab').forEach(t=>t.onclick=null);
       if(ok){
         const url=input.value.trim();
-        if(url) PAN_CONFIG.apiBase=url;
-        let arr=PAN_ALL_TYPES.filter(t=>sel.has(t));
-        if(!arr.length) arr=PAN_ALL_TYPES.slice();    // 至少保留全部，避免搜不到任何资源
+        if(url)PAN_CONFIG.apiBase=url;
+        let arr=PAN_ALL_TYPES.filter(t=>typeSel.has(t));
+        if(!arr.length)arr=PAN_ALL_TYPES.slice();
         PAN_CONFIG.diskTypes=arr;
+        PAN_CONFIG.panChannels=[...channelSel];
+        PAN_CONFIG.panPlugins=[...pluginSel];
         try{localStorage.setItem('wo_pan_api',PAN_CONFIG.apiBase)}catch(e){}
         try{localStorage.setItem('wo_pan_types',JSON.stringify(arr))}catch(e){}
+        try{localStorage.setItem('wo_pan_channels',JSON.stringify(PAN_CONFIG.panChannels))}catch(e){}
+        try{localStorage.setItem('wo_pan_plugins',JSON.stringify(PAN_CONFIG.panPlugins))}catch(e){}
       }
       resolve(ok);
     };
+    if(resetBtn)resetBtn.onclick=()=>{
+      input.value=PAN_DEFAULT_API;
+      PAN_CONFIG.apiBase=PAN_DEFAULT_API;
+      typeSel=new Set(PAN_ALL_TYPES);
+      channelSel=new Set(channelList);
+      pluginSel=new Set(pluginList);
+      renderPane();
+    };
     okBtn.onclick=()=>finish(true);
     cancelBtn.onclick=()=>finish(false);
-    mask.onclick=(e)=>{ if(e.target===mask) finish(false); };
-    input.onkeydown=(e)=>{ if(e.key==='Enter'){e.preventDefault();finish(true)} else if(e.key==='Escape'){e.preventDefault();finish(false)} };
+    mask.onclick=(e)=>{if(e.target===mask)finish(false)};
+    input.onkeydown=(e)=>{
+      if(e.key==='Enter' && document.activeElement===input){e.preventDefault();finish(true)}
+      else if(e.key==='Escape'){e.preventDefault();finish(false)}
+    };
   });
 }
+
+
 function panApi(path){return PAN_CONFIG.apiBase.replace(/\/+$/,'')+path}
 function panKeyword(t){return clean(String(t||'').replace(/[《》\[\]【】]/g,'').replace(/[(（].*?[)）]/g,''))}
 function panNormUrl(u){return String(u||'').trim().replace(/[?&]+$/,'')}
@@ -7827,7 +7956,24 @@ async function panReq(path,body){
 }
 
 async function panSearch(kw){
-  const data=await panReq('/api/search',{kw,res:'merge',src:'all',cloud_types:PAN_CONFIG.diskTypes});
+  // 搜索前同步 TG 频道和搜索插件（不受设置页取消勾选影响）
+  try{
+    if(Array.isArray(PAN_SOURCE_CONFIG.channels) && PAN_SOURCE_CONFIG.channels.length){
+      PAN_CONFIG.panChannels = PAN_SOURCE_CONFIG.channels.map(x=>typeof x==='string'?x:(x.id||x.name||x.channel||'')).filter(Boolean);
+    }
+    if(Array.isArray(PAN_SOURCE_CONFIG.plugins) && PAN_SOURCE_CONFIG.plugins.length){
+      PAN_CONFIG.panPlugins = PAN_SOURCE_CONFIG.plugins.map(x=>typeof x==='string'?x:(x.id||x.name||x.plugin||'')).filter(Boolean);
+    }
+  }catch(e){}
+  const channels=Array.isArray(PAN_CONFIG.panChannels)?PAN_CONFIG.panChannels.filter(Boolean):[];
+  const plugins=Array.isArray(PAN_CONFIG.panPlugins)?PAN_CONFIG.panPlugins.filter(Boolean):[];
+  const body={kw,res:'merge',cloud_types:PAN_CONFIG.diskTypes};
+  // 与盘搜设置菜单保持一致：可独立控制 TG 频道和搜索插件；两者同时选择时走 all。
+  if(channels.length&&plugins.length){body.src='all';body.channels=channels;body.plugins=plugins}
+  else if(channels.length){body.src='tg';body.channels=channels}
+  else if(plugins.length){body.src='plugin';body.plugins=plugins}
+  else{body.src='all'}
+  const data=await panReq('/api/search',body);
   const byType=(data&&data.data&&data.data.merged_by_type)||(data&&data.merged_by_type)||{};
   let out=[];
   Object.keys(byType).forEach(type=>{
@@ -7906,7 +8052,7 @@ function renderPanSearchBox(box,allList,activeType){
   }
   const types=panTypesPresent(allList);
   if(!activeType||!types.some(t=>t[0]===activeType))activeType=types[0][0];
-  const tabsHtml=types.map(([t,n])=>`<button class="pan-search-tab${t===activeType?' active':''}" data-type="${esc(t)}" data-label="${esc(panTypeLabel(t))}">${esc(panTypeLabel(t))} ${n}</button>`).join('');
+  const tabsHtml=types.map(([t,n])=>`<button class="pan-search-tab${t===activeType?' active':''}" data-type="${esc(t)}" data-label="${esc(panTypeLabel(t))}">${esc(panTypeLabel(t))} ${n}</button>`).join('')+`<button class="pan-search-cfg" type="button">设置</button>`;
   const list=allList.filter(x=>x.type===activeType);
   box.innerHTML=`
 <div class="pan-search-tabs">${tabsHtml}</div>
@@ -7927,6 +8073,8 @@ ${list.map(p=>{
   box.querySelectorAll('.pan-search-tab').forEach(btn=>{
     btn.onclick=(e)=>{e.stopPropagation();renderPanSearchBox(box,allList,btn.dataset.type)};
   });
+  const cfgBtn=box.querySelector('.pan-search-cfg');
+  if(cfgBtn) cfgBtn.onclick=(e)=>{e.stopPropagation();openPanConfig().then(ok=>{if(ok) renderPanSearchBox(box,allList,activeType);})};
   box.querySelectorAll('.copy-btn').forEach(btn=>btn.onclick=(e)=>{e.stopPropagation();copyText(btn.dataset.link)});
   box.querySelectorAll('.pan-item[data-url]').forEach(it=>{
     const open=()=>playPanSearch({type:it.dataset.type,url:it.dataset.url,password:it.dataset.pwd,title:it.dataset.title});
@@ -7979,11 +8127,7 @@ async function panHealthCheck(box,list){
 }
 
 
-// ===== Showpaw（海外影视网盘匹配，仅详情页 Tab，非站源）=====
-async function showpawSearch(kw){
-  const url='https://www.showpaw.xyz/api/search';
-  const body=JSON.stringify({query:String(kw||'').trim()});
-  const fm=await fmReady();
+async function playPanSearch(p){
   let data;
   if(fm&&fm.req){
     const r=await fm.req(url,{method:'POST',headers:{'Content-Type':'application/json'},body,responseType:'json',timeout:15});
@@ -8005,62 +8149,6 @@ async function showpawSearch(kw){
     datetime:x.publishTime||''
   })).filter(x=>x.url);
 }
-function renderShowpawBox(box,list){
-  if(!box)return;
-  if(!list.length){
-    box.innerHTML='<div class="pan-search-status">未匹配到 Showpaw 资源</div>';
-    return;
-  }
-  // 按网盘类型分组展示，复用 pan-list 样式
-  const byType=new Map();
-  list.forEach(p=>{
-    const t=p.type||'other';
-    if(!byType.has(t)) byType.set(t,[]);
-    byType.get(t).push(p);
-  });
-  const typeOrder=['quark','aliyun','baidu','xunlei','uc','115','123','tianyi','mobile'];
-  const types=[...byType.keys()].sort((a,b)=>{
-    const ia=typeOrder.indexOf(a),ib=typeOrder.indexOf(b);
-    return (ia<0?99:ia)-(ib<0?99:ib);
-  });
-  const tabsHtml=types.map(t=>`<button class="pan-search-tab${t===types[0]?' active':''}" data-type="${esc(t)}">${esc(panTypeLabel(t)||t)} ${byType.get(t).length}</button>`).join('');
-  function paint(active){
-    const items=byType.get(active)||[];
-    box.innerHTML=`<div class="pan-search-tabs">${tabsHtml}</div><div class="pan-list">${items.map(p=>{
-      const q=p.quality||extractQualityFromName(p.title||'')||'';
-      const pk=panColorKey(p.type||p.url||'');
-      return `<div class="pan-item" role="button" tabindex="0" data-type="${esc(p.type)}" data-url="${esc(p.url)}" data-pwd="${esc(p.password)}" data-title="${esc(p.title)}" data-pan="${esc(pk)}">
-  <div class="pan-info">
-    <div class="pan-name">${esc(p.title)}</div>
-    <div class="pan-meta">${q?`<span class="pan-quality">${esc(q)}</span>`:''}<span class="pan-url">${esc(p.url)}${p.password?' · 提取码 '+esc(p.password):''}</span></div>
-  </div>
-</div>`;
-    }).join('')}</div>`;
-    box.querySelectorAll('.pan-search-tab').forEach(btn=>{
-      btn.classList.toggle('active',btn.dataset.type===active);
-      btn.onclick=e=>{e.stopPropagation();paint(btn.dataset.type)};
-    });
-    box.querySelectorAll('.pan-item[data-url]').forEach(it=>{
-      const open=()=>playPanSearch({type:it.dataset.type,url:it.dataset.url,password:it.dataset.pwd,title:it.dataset.title});
-      it.onclick=e=>{e.stopPropagation();open()};
-      it.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}};
-    });
-  }
-  paint(types[0]);
-}
-let _showpawToken=0;
-function startShowpawSearch(box,kw){
-  const tk=++_showpawToken;
-  box.innerHTML='<div class="pan-search-status">正在匹配 Showpaw 资源…</div>';
-  showpawSearch(kw).then(list=>{
-    if(tk!==_showpawToken)return;
-    renderShowpawBox(box,list);
-  }).catch(e=>{
-    if(tk!==_showpawToken)return;
-    box.innerHTML='<div class="pan-search-status">Showpaw 匹配失败：'+esc(e.message)+'</div>';
-  });
-}
-
 async function playPanSearch(p){
   if(_currentDetailItem){
     addHistory(_currentDetailItem);

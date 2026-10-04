@@ -106,18 +106,28 @@
     <polyline points="18 15 12 9 6 15" data-page-node-id="6SaeJV8So4nqMLETtnz8bt"/>
   </svg>
 </button>
-<!-- 自绘弹窗：替代 prompt()，用于设置盘搜接口地址 -->
+<!-- 自绘弹窗：替代 prompt()，用于设置盘搜接口地址 / TG频道 / 搜索插件 / 网盘类型 -->
 <div class="custom-modal-mask" id="panCfgMask" data-page-node-id="SQ3xmtCW1iieRWLvLIn706">
   <div class="custom-modal" data-page-node-id="mTftoPR7G2CK0rMFkqbsCu">
     <div class="custom-modal-title" data-page-node-id="2jASCDpCrUl2m0zhG2nmlc">盘搜设置</div>
     <input class="custom-modal-input" id="panCfgInput" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" data-page-node-id="AXlOFbalEUYo4qlPD3PZBU">
-    <div class="pan-type-cfg" id="panTypeCfg" style="display:none" data-page-node-id="vgqT030ssmZTV9Bip140eb">
-      <div class="pan-type-cfg-label" data-page-node-id="aoZnXpZbMMUOXF5GSFHGXy"><span data-page-node-id="fYYTss3pZOHU5E4tf4fYK3">网盘类型（多选）</span><button type="button" class="pan-type-all" id="panTypeAll" data-page-node-id="E0Ar8Ala5qqc101P2JzMoI">全选</button></div>
-      <div class="pan-type-grid" id="panTypeGrid" data-page-node-id="5Uu476UkyVmqrGtSsYtZ4B"></div>
+    <div class="pan-url-history" id="panUrlHistory" data-page-node-id="vgqT030ssmZTV9Bip140eb"><div class="pan-url-item">https://so.252035.xyz</div></div>
+    <div class="pan-source-cfg" id="panSourceCfg" style="display:none" data-page-node-id="aoZnXpZbMMUOXF5GSFHGXy">
+      <div class="pan-source-tabs" id="panSourceTabs" data-page-node-id="fYYTss3pZOHU5E4tf4fYK3">
+        <button type="button" class="pan-source-tab on" data-pane="channels">TG频道 <em id="panChannelCount">0 / 0</em></button>
+        <button type="button" class="pan-source-tab" data-pane="plugins">搜索插件 <em id="panPluginCount">0 / 0</em></button>
+        <button type="button" class="pan-source-tab" data-pane="types">网盘类型 <em id="panTypeCount">0 / 0</em></button>
+      </div>
+      <div class="pan-source-head" data-page-node-id="E0Ar8Ala5qqc101P2JzMoI"><span class="pan-source-title" id="panSourceTitle" data-page-node-id="5Uu476UkyVmqrGtSsYtZ4B">TG 频道配置</span><div class="pan-source-head-actions" data-page-node-id="PNRSYOObq7odTLCO4eiDZr"><button type="button" class="pan-source-action" id="panSourceRefresh" data-page-node-id="BDgChylfaCGQ3fvGsuPhqe">刷新</button><button type="button" class="pan-source-action" id="panSourceAll" data-page-node-id="l5l01xLOVfUG6Y12FAosP1">全选</button></div></div>
+      <div class="pan-source-list" id="panSourceList" data-page-node-id="2jASCDpCrUl2m0zhG2nmlc"></div>
     </div>
-    <div class="custom-modal-actions" data-page-node-id="PNRSYOObq7odTLCO4eiDZr">
-      <button class="custom-modal-btn" id="panCfgCancel" data-page-node-id="BDgChylfaCGQ3fvGsuPhqe">取消</button>
-      <button class="custom-modal-btn accent" id="panCfgOk" data-page-node-id="l5l01xLOVfUG6Y12FAosP1">确定</button>
+    <div class="pan-type-cfg" id="panTypeCfg" style="display:none" data-page-node-id="aoZnXpZbMMUOXF5GSFHGXy">
+      <div class="pan-type-cfg-label" data-page-node-id="fYYTss3pZOHU5E4tf4fYK3"><span data-page-node-id="E0Ar8Ala5qqc101P2JzMoI">网盘类型（多选）</span><button type="button" class="pan-type-all" id="panTypeAll" data-page-node-id="5Uu476UkyVmqrGtSsYtZ4B">全选</button></div>
+      <div class="pan-type-grid" id="panTypeGrid" data-page-node-id="PNRSYOObq7odTLCO4eiDZr"></div>
+    </div>
+    <div class="custom-modal-actions" data-page-node-id="BDgChylfaCGQ3fvGsuPhqe">
+      <button class="custom-modal-btn" id="panCfgReset" type="button">恢复默认</button>
+      <div style="display:flex;gap:8px"><button class="custom-modal-btn" id="panCfgCancel" type="button">取消</button><button class="custom-modal-btn accent" id="panCfgOk" type="button">确定</button></div>
     </div>
   </div>
 </div>
