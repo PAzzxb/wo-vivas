@@ -7436,7 +7436,7 @@ ${_netdiskHtml}
   </div>
   <div class="det-res-pane" data-pane="monitor" hidden>
     <div class="monitor-iframe-wrap">
-      <iframe id="monitorFrame" src="https://pan-site-monitor.lbw88846.workers.dev" title="站点URL状态监控" loading="lazy"></iframe>
+      <iframe id="monitorFrame" src="https://pan-site-monitor.douer.me" title="站点URL状态监控" loading="lazy"></iframe>
     </div>
   </div>
 </div>
