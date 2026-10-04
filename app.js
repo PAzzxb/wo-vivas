@@ -7423,7 +7423,6 @@ async function _loadDetailContent(v){
   <div class="det-res-tabs">
     <button class="det-res-tab active" data-tab="netdisk" type="button">网盘资源<em>${d.pans.length||0}</em></button>
     <button class="det-res-tab" data-tab="pansou" type="button">盘搜资源</button>
-    <button class="det-res-tab" data-tab="monitor" type="button">站点监控</button>
   </div>
   <button id="panCfgBtn" class="pan-cfg-btn" title="盘搜设置（地址 + 网盘类型）">⚙</button>
 </div>
@@ -7433,11 +7432,6 @@ ${_netdiskHtml}
   </div>
   <div class="det-res-pane" data-pane="pansou" hidden>
     <div class="pan-search-box" id="panSearchBox"><div class="pan-search-status">正在聚合搜索网盘…</div></div>
-  </div>
-  <div class="det-res-pane" data-pane="monitor" hidden>
-    <div class="monitor-iframe-wrap">
-      <iframe id="monitorFrame" src="https://pan-site-monitor.douer.me" title="站点URL状态监控" loading="lazy"></iframe>
-    </div>
   </div>
 </div>
 </section>
@@ -7481,12 +7475,6 @@ ${_netdiskHtml}
         e.stopPropagation();
         resBox.querySelectorAll('.det-res-tab').forEach(t=>t.classList.toggle('active',t===tab));
         resBox.querySelectorAll('.det-res-pane').forEach(p=>{p.hidden=(p.dataset.pane!==tab.dataset.tab)});
-        if(tab.dataset.tab==='monitor'){
-          const frame=document.getElementById('monitorFrame');
-          if(frame && !frame.src){
-            frame.src='https://pan-site-monitor.lbw88846.workers.dev';
-          }
-        }
         _setCollapseOpen(true);   // 点 tab 自动展开
       });
     });

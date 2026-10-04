@@ -2085,46 +2085,6 @@ html.nav-mode-top .navrow{
 }
 .det-collapse .pan-cfg-btn{flex-shrink:0}
 .det-res-pane[hidden]{display:none !important}
-.det-res-pane[data-pane="monitor"]{padding:0}
-.monitor-iframe-wrap{width:100%;height:100%;min-height:560px;overflow:hidden;margin:0}
-.monitor-iframe-wrap iframe{width:100%;height:100%;min-height:560px;border:none;margin:0;padding:0;display:block;border-radius:16px}
-@media (orientation:landscape){
-  .monitor-iframe-wrap{min-height:380px}
-  .monitor-iframe-wrap iframe{min-height:380px}
-}
-@media (max-width:420px){
-  .monitor-iframe-wrap{min-height:520px}
-  .monitor-iframe-wrap iframe{min-height:520px}
-}
-/* 放大整个资源面板：加宽、加高、加大按钮 */
-.det-collapse.open{
-  width:calc(100% - 24px) !important;
-  max-width:none !important;
-  margin:0 auto 12px auto !important;
-  padding:0 !important;
-}
-.det-collapse-body{
-  padding:0 16px 16px !important;
-  min-height:0;
-}
-.det-res-tab{
-  padding:12px 20px !important;
-  font-size:1rem !important;
-  min-width:96px !important;
-}
-.det-res-tab em{
-  font-size:0.8rem !important;
-  padding:2px 6px !important;
-}
-.pan-cfg-btn{
-  width:40px !important;
-  height:40px !important;
-  font-size:20px !important;
-}
-.det-res-pane .pan-search-box,
-.det-res-pane .pan-list{
-  min-height:480px !important;
-}
 
 
 /* poster row — 海报已独立展示为顶部大图，此处只保留文字标题区 */
