@@ -6957,11 +6957,13 @@ async function madouResolveHls(masterUrl){
 
 
 async function parseDetail(v){
+  try{ window.__dbg={stage:'parseDetail', vSiteId:v&&v.siteId, vHref:v&&v.href, vKeys:v&&Object.keys(v).slice(0,8)}; }catch(eDbg){}
   if(v&&(v.siteId==='gz360'||(v.href&&String(v.href).indexOf('gz360://')===0))) return gz360Detail(v);
   if(v&&(v.siteId==='jinpai'||(v.href&&String(v.href).indexOf('jinpai://')===0))) return jinpaiDetail(v);
   if(v&&(v.siteId==='huangguoai'||(v.href&&String(v.href).indexOf('huangguoai://')===0))) return huangguoaiDetail(v);
   if(v&&(v.siteId==='chigua51'||v._chiguaId||(v.href&&String(v.href).indexOf('chigua://')===0))) return chiguaDetail(v);
   if(v&&(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0))) return cg57Detail(v);
+  try{ window.__dbg={stage:'parseDetail_jianpian_check', match: !!(v&&(v.siteId==='jianpian'||(v.href&&String(v.href).indexOf('jianpian://')===0)))}; }catch(eDbg){}
   if(v&&(v.siteId==='jianpian'||(v.href&&String(v.href).indexOf('jianpian://')===0))) return jianpianDetail(v);
   if(v&&(v.siteId==='xvideos'||v._xvHref||(v.href&&String(v.href).indexOf('xvideos://')===0))) return xvDetail(v);
   if(v&&(v.siteId==='hdhive'||v._hdhive||(v.href&&String(v.href).indexOf('hdhive://')===0))){
