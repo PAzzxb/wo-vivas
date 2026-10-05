@@ -7809,7 +7809,7 @@ ${_netdiskHtml}
     };
 
   }catch(e){
-    panel.innerHTML=`<div class="det-loading"><div class="empty">详情失败：${esc(e.message)}</div></div>`;
+    panel.innerHTML=`<div class="det-loading"><div class="empty">详情失败：${esc(e.message)}<br><small>${esc((e&&e.stack||'').split('\n')[1]||'')}</small></div></div>`;
   }
 }
 // ===== 盘搜（PanSou 聚合网盘搜索）=====
