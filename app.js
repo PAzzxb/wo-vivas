@@ -4364,9 +4364,9 @@ async function jianpianSearch(s,q){
 }
 async function jianpianDetail(v){
   const id=String((v&&(v._jianpianVodId||(String(v.href||'').replace(/^jianpian:\/\//,''))))||'').trim();
-  if(!id) return{panItems:[],err:"no id"};
-  const data=await ztFetch(`/api/video/detailv2?id=${encodeURIComponent(id)}`);
-  if(!data||data.code!==1||!data.data) return{panItems:[],err:"no data"};
+  if(!id) return{pans:[],err:"no id"};
+  const data=await ztFetch(`/api/video/detailv2?id=${id}`);
+  if(!data||data.code!==1||!data.data) return{pans:[],err:"no data"};
   const d=data.data;
   const title=String(d.title||d.original_name||"");
   const pic=ztImgPath(d.thumbnail||d.tvimg);
@@ -4384,7 +4384,7 @@ async function jianpianDetail(v){
       if(sl&&sl.url) sources.push({name:"线路",url:sl.url,quality:extractQualityFromName(String(sl.source_config_name||""))});
     }
   }
-  const panItems=sources.map((p,i)=>({
+  const pans=sources.map((p,i)=>({
     _i:i,
     name:p.name||"线路",
     url:p.url,
@@ -4393,7 +4393,8 @@ async function jianpianDetail(v){
     _jianpian:true,
     _online:true
   }));
-  return{title,pic,meta,genres,tags,desc,panItems,onlineOnly:true};
+  const info={title,pic,desc:desc+(meta?'\n'+meta:''),genres,tags,siteName:s.name||'荐片'};
+  return{info,pans,onlineOnly:true};
 }
 
 async function jinpaiList(s,cat,pg){
