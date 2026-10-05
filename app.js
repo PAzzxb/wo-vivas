@@ -2111,7 +2111,6 @@ function _onContentActivate(e){
   const i=parseInt(t.dataset.i);
   if(isNaN(i)) return;
   const v=last[i];
-  try{ window.__dbg={stage:'activate', i, hasV:!!v, vTitle:v&&v.title, vHref:v&&v.href, lastLen:last.length}; }catch(eDbg){}
   if(v) openDetail(v);
 }
 function _ensureContentDelegation(){
@@ -4364,13 +4363,10 @@ async function jianpianSearch(s,q){
   return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,40);
 }
 async function jianpianDetail(v){
-  try{ window.__jpCall=(window.__jpCall||0)+1; window.__jpV={title:v&&v.title,href:v&&v.href,siteId:v&&v.siteId}; }catch(eDbg){}
   const id=String((v&&(v._jianpianVodId||(String(v.href||'').replace(/^jianpian:\/\//,''))))||'').trim();
-  if(!id){ try{ window.__jpErr='no id'; }catch(e){} return{pans:[],err:"no id"}; }
-  try{ window.__jpId=id; }catch(eDbg){}
+  if(!id) return{pans:[],err:"no id"};
   const data=await ztFetch(`/api/video/detailv2?id=${id}`);
-  try{ window.__jpData=data; }catch(eDbg){}
-  if(!data||data.code!==1||!data.data){ try{ window.__jpErr='no data'; }catch(e){} return{pans:[],err:"no data"}; }
+  if(!data||data.code!==1||!data.data) return{pans:[],err:"no data"};
   const d=data.data;
   const title=String(d.title||d.original_name||"");
   const pic=ztImgPath(d.thumbnail||d.tvimg);
@@ -4397,7 +4393,7 @@ async function jianpianDetail(v){
     _jianpian:true,
     _online:true
   }));
-  const info={title,pic,desc:desc+(meta?'\n'+meta:''),genres,tags,siteName:s.name||'荐片'};
+  const info={title,pic,desc:desc+(meta?'\n'+meta:''),genres,tags,siteName:v.siteName||'荐片'};
   return{info,pans,onlineOnly:true};
 }
 
@@ -6957,14 +6953,11 @@ async function madouResolveHls(masterUrl){
 
 
 async function parseDetail(v){
-  try{ window.__dbg={stage:'parseDetail', vSiteId:v&&v.siteId, vHref:v&&v.href, vKeys:v&&Object.keys(v).slice(0,8)}; }catch(eDbg){}
-  try{ window.__parseDetail=parseDetail; }catch(eExp){}
   if(v&&(v.siteId==='gz360'||(v.href&&String(v.href).indexOf('gz360://')===0))) return gz360Detail(v);
   if(v&&(v.siteId==='jinpai'||(v.href&&String(v.href).indexOf('jinpai://')===0))) return jinpaiDetail(v);
   if(v&&(v.siteId==='huangguoai'||(v.href&&String(v.href).indexOf('huangguoai://')===0))) return huangguoaiDetail(v);
   if(v&&(v.siteId==='chigua51'||v._chiguaId||(v.href&&String(v.href).indexOf('chigua://')===0))) return chiguaDetail(v);
   if(v&&(v.siteId==='chigua57'||v._chigua57Id||(v.href&&String(v.href).indexOf('chigua57://')===0))) return cg57Detail(v);
-  try{ window.__dbg={stage:'parseDetail_jianpian_check', match: !!(v&&(v.siteId==='jianpian'||(v.href&&String(v.href).indexOf('jianpian://')===0)))}; }catch(eDbg){}
   if(v&&(v.siteId==='jianpian'||(v.href&&String(v.href).indexOf('jianpian://')===0))) return jianpianDetail(v);
   if(v&&(v.siteId==='xvideos'||v._xvHref||(v.href&&String(v.href).indexOf('xvideos://')===0))) return xvDetail(v);
   if(v&&(v.siteId==='hdhive'||v._hdhive||(v.href&&String(v.href).indexOf('hdhive://')===0))){
@@ -7232,7 +7225,6 @@ function openDetail(v){
   _loadDetailContent(v);
 }
 async function _loadDetailContent(v){
-  try{ window.__dbg={stage:'start', title:v&&v.title}; }catch(eDbg){}
   const sheet=$('#sheet'), panel=$('#panel');
   const heroImg=$('#detHeroImg'), topbarTitle=$('#detTopbarTitle');
   const heroCta=$('#detHeroCta');
@@ -7293,21 +7285,17 @@ async function _loadDetailContent(v){
     })();
     // 详情解析加总超时，避免 go.php/站源慢请求把「读取详情」卡死
     let d;
-    try{ window.__dbg={stage:'beforeParse', title:v&&v.title}; }catch(eDbg){}
     try{
       d=await Promise.race([
         parseDetail(v),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('详情超时，请重试')),12000))
       ]);
-      try{ window.__dbg={stage:'afterParse', title:v&&v.title, hasInfo:!!(d&&d.info), pansLen:d&&d.pans&&d.pans.length, err:d&&d.err}; }catch(eDbg){}
     }catch(eTimeout){
-      try{ window.__dbg={stage:'catchError', errMsg:eTimeout&&eTimeout.message, errStack:(eTimeout&&eTimeout.stack||'').split('\n').slice(0,4).join('|')}; }catch(eDbg){}
       // 超时仍尽量用卡片自带信息出壳，网盘留给盘搜
       d={info:{title:v.title||v.name||'',pic:v.pic||'',desc:'',siteName:v.siteName||''},pans:[]};
       console&&console.warn&&console.warn('[detail]',eTimeout&&eTimeout.message);
     }
     if (_currentDetailItem !== v) return;   // 用户已返回/打开新详情，丢弃本次结果
-    try{ window.__dbg={infoTitle:d.info&&d.info.title, pansLen:d.pans&&d.pans.length, pansFirst:d.pans&&d.pans[0]&&d.pans[0].url, err:d.err, timeout:eTimeout&&eTimeout.message}; }catch(eDbg){}
     let info=d.info||{};
     // 把站源详情元数据挂到当前条目，播放页 vodInline 可读取
     try{
@@ -7821,7 +7809,7 @@ ${_netdiskHtml}
     };
 
   }catch(e){
-    panel.innerHTML=`<div class="det-loading"><div class="empty">详情失败：${esc(e.message)}<br><small>${esc((e&&e.stack||'').split('\n')[1]||'')}</small></div></div>`;
+    panel.innerHTML=`<div class="det-loading"><div class="empty">详情失败：${esc(e.message)}</div></div>`;
   }
 }
 // ===== 盘搜（PanSou 聚合网盘搜索）=====
