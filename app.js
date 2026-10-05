@@ -7300,6 +7300,7 @@ async function _loadDetailContent(v){
       ]);
       try{ window.__dbg={stage:'afterParse', title:v&&v.title, hasInfo:!!(d&&d.info), pansLen:d&&d.pans&&d.pans.length, err:d&&d.err}; }catch(eDbg){}
     }catch(eTimeout){
+      try{ window.__dbg={stage:'catchError', errMsg:eTimeout&&eTimeout.message, errStack:(eTimeout&&eTimeout.stack||'').split('\n').slice(0,4).join('|')}; }catch(eDbg){}
       // 超时仍尽量用卡片自带信息出壳，网盘留给盘搜
       d={info:{title:v.title||v.name||'',pic:v.pic||'',desc:'',siteName:v.siteName||''},pans:[]};
       console&&console.warn&&console.warn('[detail]',eTimeout&&eTimeout.message);
