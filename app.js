@@ -4343,7 +4343,8 @@ function ztToSourceList(ss){
 async function jianpianList(s,cat,pg){
   const page=Math.max(1,pg|0);
   const catId=String(cat||'1');
-  const url=`${ZT_API}/api/crumb/list?fcate_pid=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`;
+  // crumb/list 实测 500（服务端报错），改用 search API 拉分类列表
+  const url=`${ZT_API}/api/v2/search/videoV2?key=${encodeURIComponent('热门')}&category_id=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`;
   let data;
   try{
     const r=await fetch(url,{headers:ZT_HEADERS});
