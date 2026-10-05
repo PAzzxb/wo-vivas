@@ -2111,6 +2111,7 @@ function _onContentActivate(e){
   const i=parseInt(t.dataset.i);
   if(isNaN(i)) return;
   const v=last[i];
+  try{ window.__dbg={stage:'activate', i, hasV:!!v, vTitle:v&&v.title, vHref:v&&v.href, lastLen:last.length}; }catch(eDbg){}
   if(v) openDetail(v);
 }
 function _ensureContentDelegation(){
