@@ -4364,9 +4364,12 @@ async function jianpianSearch(s,q){
   return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,40);
 }
 async function jianpianDetail(v){
+  try{ window.__dbg={stage:'jp_start', vTitle:v&&v.title, vHref:v&&v.href, vSiteId:v&&v.siteId}; }catch(eDbg){}
   const id=String((v&&(v._jianpianVodId||(String(v.href||'').replace(/^jianpian:\/\//,''))))||'').trim();
   if(!id) return{pans:[],err:"no id"};
+  try{ window.__dbg={stage:'jp_fetching', id}; }catch(eDbg){}
   const data=await ztFetch(`/api/video/detailv2?id=${id}`);
+  try{ window.__dbg={stage:'jp_fetched', hasData:!!data, code:data&&data.code, hasD:!!(data&&data.data)}; }catch(eDbg){}
   if(!data||data.code!==1||!data.data) return{pans:[],err:"no data"};
   const d=data.data;
   const title=String(d.title||d.original_name||"");
