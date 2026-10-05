@@ -4305,6 +4305,103 @@ function jinpaiToCard(it,s){
   const remark=clean(it.vodRemarks||it.vodSerial||it.vodClass||it.typeName||s.name||'金牌');
   return{title,href:'jinpai://'+id,pic,remark,siteId:s.id,siteName:s.name||'金牌',quality:getQuality(title+' '+remark),_jinpaiVodId:id,_online:true};
 }
+const ZT_API="https://api.ztcgi.com";
+const ZT_IMG="https://img1.vbwus.com";
+const ZT_HEADERS={"Accept":"application/json","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36","Referer":"https://api.ztcgi.com/"};
+function ztImgPath(p){
+  if(!p) return "";
+  if(/^https?:\/\//i.test(p)) return p.replace(/^https?:\/\/[^/]+/,ZT_IMG);
+  return ZT_IMG + (p.startsWith("/")?p:"/"+p);
+}
+function ztToCard(it,s){
+  const id=String(it&&it.id!=null?it.id:(it&&it._id));
+  if(!id) return null;
+  const title=String(it&&it.title||it&&it.original_name||"");
+  if(!title) return null;
+  const pic=ztImgPath(it&&it.thumbnail);
+  const area=Array.isArray(it&&it.areas)?it.areas.map(a=>a.area).filter(Boolean).join(" "):"";
+  const cats=Array.isArray(it&&it.res_categories)?it.res_categories.map(c=>c.name).filter(Boolean):[];
+  const remark=[area, ...cats].filter(Boolean).join(" · ");
+  return{title,href:"jianpian://"+id,pic,remark,siteId:s.id,siteName:s.name||"荐片",quality:(it&&it.score!=null?String(it.score):""),_jianpianVodId:id,_online:true};
+}
+function ztToSourceList(ss){
+  if(!Array.isArray(ss)) return [];
+  const out=[];
+  for(const src of ss){
+    const name=src&&src.name;
+    const list=Array.isArray(src&&src.source_list)?src.source_list:[];
+    for(const sl of list){
+      const u=sl&&sl.url;
+      if(!u) continue;
+      const q=extractQualityFromName(String(sl&&sl.source_config_name||name||""));
+      out.push({name:String(name||"线路"),url:u,quality:q||undefined});
+    }
+  }
+  return out;
+}
+async function jianpianList(s,cat,pg){
+  const page=Math.max(1,pg|0);
+  const catId=String(cat||'1');
+  const url=`${ZT_API}/api/crumb/list?fcate_pid=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`;
+  let data;
+  try{
+    const r=await fetch(url,{headers:ZT_HEADERS});
+    data=await r.json();
+  }catch(e){ return []; }
+  if(!data||data.code!==1||!Array.isArray(data.data)) return [];
+  return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,60);
+}
+async function jianpianSearch(s,q){
+  const kw=String(q||'').trim();
+  if(!kw)return[];
+  const url=`${ZT_API}/api/v2/search/videoV2?key=${encodeURIComponent(kw)}&category_id=88&page=1&pageSize=40`;
+  let data;
+  try{
+    const r=await fetch(url,{headers:ZT_HEADERS});
+    data=await r.json();
+  }catch(e){ return []; }
+  if(!data||data.code!==1||!Array.isArray(data.data)) return [];
+  return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,40);
+}
+async function jianpianDetail(v){
+  const id=String((v&&(v._jianpianVodId||(String(v.href||'').replace(/^jianpian:\/\//,''))))||'').trim();
+  if(!id) return{panItems:[],err:"no id"};
+  const url=`${ZT_API}/api/video/detailv2?id=${encodeURIComponent(id)}`;
+  let data;
+  try{
+    const r=await fetch(url,{headers:ZT_HEADERS});
+    data=await r.json();
+  }catch(e){ return{panItems:[],err:"fetch failed"}; }
+  if(!data||data.code!==1||!data.data) return{panItems:[],err:"no data"};
+  const d=data.data;
+  const title=String(d.title||d.original_name||"");
+  const pic=ztImgPath(d.thumbnail||d.tvimg);
+  const area=Array.isArray(d.areas)?d.areas.map(a=>a.area).filter(Boolean).join(" "):"";
+  const genres=Array.isArray(d.types)?d.types.map(t=>t.name).filter(Boolean):[];
+  const tags=Array.isArray(d.tags)?d.tags.map(t=>t.name).filter(Boolean):[];
+  const year=d.year||"";
+  const duration=d.duration||"";
+  const desc=String(d.description||"");
+  const meta=[area,year,duration].filter(Boolean).join(" · ");
+  const sources=ztToSourceList(d.source_list_source);
+  if(!sources.length){
+    const pl=Array.isArray(d.playlist)?d.playlist:[];
+    for(const sl of pl){
+      if(sl&&sl.url) sources.push({name:"线路",url:sl.url,quality:extractQualityFromName(String(sl.source_config_name||""))});
+    }
+  }
+  const panItems=sources.map((p,i)=>({
+    _i:i,
+    name:p.name||"线路",
+    url:p.url,
+    type:p.quality?"最高画质":"在线",
+    quality:p.quality||undefined,
+    _jianpian:true,
+    _online:true
+  }));
+  return{title,pic,meta,genres,tags,desc,panItems,onlineOnly:true};
+}
+
 async function jinpaiList(s,cat,pg){
   const page=Math.max(1,pg|0);
   const type1=String(cat||'1');
@@ -6488,7 +6585,7 @@ async function playPan(p){
     addHistory(_currentDetailItem);
     // 在线分集：记下看到第几集（瓜子/金牌/有 _allEpisodes 的源）
     try{
-      const online=!!(p&&(p._online||p._huangguoai||p._jinpai||p._allEpisodes||p.type==='最高画质'||p.type==='在线'));
+      const online=!!(p&&(p._online||p._huangguoai||p._jinpai||p._jianpian||p._allEpisodes||p.type==='最高画质'||p.type==='在线'));
       if(online) markHistoryProgress(_currentDetailItem, p);
     }catch(e){}
   }
@@ -7393,7 +7490,7 @@ async function _loadDetailContent(v){
         const head=multi?`<div class="det-src-label"><span>${esc(sn)}</span><em>${items.length}</em></div>`:'';
         const list=items.map(p=>{
           const isGallery=!!(p._imgGallery||p.type==='图集'||/^cg57gallery:\/\//i.test(String(p.url||'')));
-          const isOnline=!isGallery && !!(p._online||p.type==='最高画质'||p.type==='在线'||/\.m3u8(\?|$)/i.test(String(p.url||'')));
+          const isOnline=!isGallery && !!(p._online||p._jianpian||p.type==='最高画质'||p.type==='在线'||/\.m3u8(\?|$)/i.test(String(p.url||'')));
           const q=isGallery?'图集':(isOnline?'最高画质':(extractQualityFromName(p.name||'')||extractQualityFromName(p.url||'')));
           const pk=isGallery?'online':(isOnline?'online':panColorKey(p.type||p.url||''));
           const showName=isGallery?(p.name||'查看图集'):(isOnline?(p.title||p.name||'在线播放'):p.name);
@@ -7551,7 +7648,7 @@ ${_netdiskHtml}
     async function ensurePlayReady(panListFromSearch){
       if(_currentDetailItem!==v) return;
       // 0) 在线直链（麻豆/瓜子等）：详情已预解析；若已有续播目标则保留
-      const onlineHit=(d.pans||[]).find(p=>p&&p.url&&(p._online||p._huangguoai||p._jinpai||p.type==='最高画质'||p.type==='在线'||/\.m3u8(\?|$)/i.test(String(p.url||''))||/^huangguoai-play:\/\//i.test(String(p.url||''))));
+      const onlineHit=(d.pans||[]).find(p=>p&&p.url&&(p._online||p._huangguoai||p._jinpai||p._jianpian||p.type==='最高画质'||p.type==='在线'||/\.m3u8(\?|$)/i.test(String(p.url||''))||/^huangguoai-play:\/\//i.test(String(p.url||''))));
       if(onlineHit){
         // 已根据最近观看选好续播集，不要强行改回第 1 集
         if(!_playTarget||!_playTarget.url) _playTarget=onlineHit;
