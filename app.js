@@ -7296,6 +7296,7 @@ async function _loadDetailContent(v){
       console&&console.warn&&console.warn('[detail]',eTimeout&&eTimeout.message);
     }
     if (_currentDetailItem !== v) return;   // 用户已返回/打开新详情，丢弃本次结果
+    try{ window.__dbg={infoTitle:d.info&&d.info.title, pansLen:d.pans&&d.pans.length, pansFirst:d.pans&&d.pans[0]&&d.pans[0].url, err:d.err}; }catch(eDbg){}
     let info=d.info||{};
     // 把站源详情元数据挂到当前条目，播放页 vodInline 可读取
     try{
