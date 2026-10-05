@@ -4307,6 +4307,14 @@ function jinpaiToCard(it,s){
   return{title,href:'jinpai://'+id,pic,remark,siteId:s.id,siteName:s.name||'金牌',quality:getQuality(title+' '+remark),_jinpaiVodId:id,_online:true};
 }
 const ZT_API="https://api.ztcgi.com";
+const ZT_PROXY="https://corsproxy.lbw88846.workers.dev/?u=";
+async function ztFetch(path){
+  const url=ZT_PROXY+encodeURIComponent(ZT_API+path);
+  try{
+    const r=await fetch(url,{headers:ZT_HEADERS});
+    return await r.json();
+  }catch(e){ return null; }
+}
 const ZT_IMG="https://img1.vbwus.com";
 const ZT_HEADERS={"Accept":"application/json","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36","Referer":"https://api.ztcgi.com/"};
 function ztImgPath(p){
@@ -4343,37 +4351,21 @@ function ztToSourceList(ss){
 async function jianpianList(s,cat,pg){
   const page=Math.max(1,pg|0);
   const catId=String(cat||'1');
-  // crumb/list 实测 500（服务端报错），改用 search API 拉分类列表
-  const url=`${ZT_API}/api/v2/search/videoV2?key=${encodeURIComponent('热门')}&category_id=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`;
-  let data;
-  try{
-    const r=await fetch(url,{headers:ZT_HEADERS});
-    data=await r.json();
-  }catch(e){ return []; }
+  const data=await ztFetch(`/api/v2/search/videoV2?key=${encodeURIComponent('热门')}&category_id=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`);
   if(!data||data.code!==1||!Array.isArray(data.data)) return [];
   return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,60);
 }
 async function jianpianSearch(s,q){
   const kw=String(q||'').trim();
   if(!kw)return[];
-  const url=`${ZT_API}/api/v2/search/videoV2?key=${encodeURIComponent(kw)}&category_id=88&page=1&pageSize=40`;
-  let data;
-  try{
-    const r=await fetch(url,{headers:ZT_HEADERS});
-    data=await r.json();
-  }catch(e){ return []; }
+  const data=await ztFetch(`/api/v2/search/videoV2?key=${encodeURIComponent(kw)}&category_id=88&page=1&pageSize=40`);
   if(!data||data.code!==1||!Array.isArray(data.data)) return [];
   return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,40);
 }
 async function jianpianDetail(v){
   const id=String((v&&(v._jianpianVodId||(String(v.href||'').replace(/^jianpian:\/\//,''))))||'').trim();
   if(!id) return{panItems:[],err:"no id"};
-  const url=`${ZT_API}/api/video/detailv2?id=${encodeURIComponent(id)}`;
-  let data;
-  try{
-    const r=await fetch(url,{headers:ZT_HEADERS});
-    data=await r.json();
-  }catch(e){ return{panItems:[],err:"fetch failed"}; }
+  const data=await ztFetch(`/api/video/detailv2?id=${encodeURIComponent(id)}`);
   if(!data||data.code!==1||!data.data) return{panItems:[],err:"no data"};
   const d=data.data;
   const title=String(d.title||d.original_name||"");
