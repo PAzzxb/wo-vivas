@@ -7225,6 +7225,7 @@ function openDetail(v){
   _loadDetailContent(v);
 }
 async function _loadDetailContent(v){
+  try{ window.__dbg={stage:'start', title:v&&v.title}; }catch(eDbg){}
   const sheet=$('#sheet'), panel=$('#panel');
   const heroImg=$('#detHeroImg'), topbarTitle=$('#detTopbarTitle');
   const heroCta=$('#detHeroCta');
@@ -7285,11 +7286,13 @@ async function _loadDetailContent(v){
     })();
     // 详情解析加总超时，避免 go.php/站源慢请求把「读取详情」卡死
     let d;
+    try{ window.__dbg={stage:'beforeParse', title:v&&v.title}; }catch(eDbg){}
     try{
       d=await Promise.race([
         parseDetail(v),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('详情超时，请重试')),12000))
       ]);
+      try{ window.__dbg={stage:'afterParse', title:v&&v.title, hasInfo:!!(d&&d.info), pansLen:d&&d.pans&&d.pans.length, err:d&&d.err}; }catch(eDbg){}
     }catch(eTimeout){
       // 超时仍尽量用卡片自带信息出壳，网盘留给盘搜
       d={info:{title:v.title||v.name||'',pic:v.pic||'',desc:'',siteName:v.siteName||''},pans:[]};
