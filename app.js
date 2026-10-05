@@ -4309,7 +4309,7 @@ function jinpaiToCard(it,s){
 const ZT_API="https://api.ztcgi.com";
 const ZT_PROXY="https://corsproxy.lbw88846.workers.dev/?u=";
 async function ztFetch(path){
-  const url=ZT_PROXY+encodeURIComponent(ZT_API+path);
+  const url=ZT_PROXY+ZT_API+path;
   try{
     const r=await fetch(url,{headers:ZT_HEADERS});
     return await r.json();
@@ -4351,7 +4351,7 @@ function ztToSourceList(ss){
 async function jianpianList(s,cat,pg){
   const page=Math.max(1,pg|0);
   const catId=String(cat||'1');
-  const data=await ztFetch(`/api/v2/search/videoV2?key=${encodeURIComponent('热门')}&category_id=${encodeURIComponent(catId)}&sort=hot&page=${page}&pageSize=24`);
+  const data=await ztFetch(`/api/v2/search/videoV2?key=热门&category_id=${catId}&sort=hot&page=${page}&pageSize=24`);
   if(!data||data.code!==1||!Array.isArray(data.data)) return [];
   return data.data.map(it=>ztToCard(it,s)).filter(Boolean).slice(0,60);
 }
