@@ -8058,19 +8058,35 @@ function panDomainPool(){
   add(PAN_DEFAULT_API);
   return list;
 }
+/* 关键词变体：完整词搜不到时，依次尝试 去间隔号 / 按间隔号切分 / 去尾部集数 等写法，
+   容忍站源标题错别字、间隔号省略、「第X集」尾巴等常见不一致 */
+function panKwVariants(kw){
+  const k=String(kw||'').trim();
+  if(!k)return[];
+  const vs=[k];
+  const add=s=>{s=String(s||'').trim();if(s&&s.length>=2&&vs.indexOf(s)===-1)vs.push(s);};
+  k.split(/\s+/).forEach(add);            // 「半步多·沧澜传 更新至40集」→「半步多·沧澜传」
+  add(k.replace(/[·・.．,，]+/g,''));      // 去掉间隔号/点
+  k.split(/[·・.．]/).forEach(add);        // 按间隔号切分 →「半步多」「沧澜传」
+  return vs;
+}
 /* 盘搜：当前选中域无结果或请求失败时，自动依次尝试其他盘搜域名，任一域有结果即返回；
+   所有域名都无结果时，再用关键词变体在各域名上兜底一轮；
    全部域都请求失败才抛错（界面提示「盘搜失败」），有响应但都无结果则返回空列表 */
 async function panSearchWithRetry(kw,onProgress){
   const pool=panDomainPool();
   const cur=PAN_CONFIG.apiBase;
   const order=[cur].concat(pool.filter(d=>d!==cur));
-  let lastErr=null, anyOk=false;
+  const liveDomains=[];
+  let lastErr=null;
+  const prog=(d,i,n,k)=>{ if(typeof onProgress==='function'){ try{ onProgress(d,i,n,k); }catch(e){} } };
+  // 第一轮：完整关键词，当前选中域多重试一次
   for(let i=0;i<order.length;i++){
     const d=order[i];
-    if(typeof onProgress==='function'){ try{ onProgress(d,i,order.length); }catch(e){} }
+    prog(d,i,order.length,kw);
     try{
       let list=await panSearch(kw,d);
-      anyOk=true;
+      liveDomains.push(d);
       if(list&&list.length)return list;
       if(i===0){ // 当前选中域按旧逻辑多重试一次，抵御偶发 400/超时
         await new Promise(r=>setTimeout(r,700));
@@ -8080,7 +8096,22 @@ async function panSearchWithRetry(kw,onProgress){
     }catch(e){lastErr=e;}
     if(i<order.length-1)await new Promise(r=>setTimeout(r,400));
   }
-  if(!anyOk&&lastErr)throw lastErr;
+  // 第二轮：关键词变体，只在有响应的域名上找（避免向已挂掉的域重复发请求）
+  const variants=panKwVariants(kw).slice(1);
+  const doms=liveDomains.length?liveDomains:order;
+  if(variants.length){
+    for(const v of variants){
+      for(const d of doms){
+        prog(d,doms.indexOf(d),doms.length,v);
+        try{
+          const list=await panSearch(v,d);
+          if(list&&list.length)return list;
+        }catch(e){lastErr=e;}
+        await new Promise(r=>setTimeout(r,300));
+      }
+    }
+  }
+  if(!liveDomains.length&&lastErr)throw lastErr;
   return [];
 }
 
@@ -8245,9 +8276,9 @@ let _panToken=0;
 function startPanSearch(box,kw,onResult){
   const tk=++_panToken;
   box.innerHTML='<div class="pan-search-status">正在聚合搜索网盘…</div>';
-  panSearchWithRetry(kw,function(d,i,n){
+  panSearchWithRetry(kw,function(d,i,n,curKw){
     if(tk!==_panToken)return;
-    box.innerHTML='<div class="pan-search-status">正在搜索盘搜源 '+(i+1)+'/'+n+'：'+esc(d)+'</div>';
+    box.innerHTML='<div class="pan-search-status">正在搜索盘搜源 '+(i+1)+'/'+n+'：'+esc(d)+(curKw&&curKw!==kw?'（关键词：'+esc(curKw)+'）':'')+'</div>';
   }).then(list=>{
     if(tk!==_panToken)return;
     renderPanSearchBox(box,list,'');
