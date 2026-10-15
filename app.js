@@ -704,7 +704,7 @@ function openSiteDomainConfig(){
     };
   });
 }
-let activeSite='wanou',activeCat='',page=1,last=[];
+let activeSite='dyyjv',activeCat='',page=1,last=[];
 /* 搜索默认聚合；用户手动切换后写入 localStorage，未设置时一律聚合 */
 let aggregate=(function(){
   try{
