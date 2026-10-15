@@ -7753,7 +7753,8 @@ ${_netdiskHtml}
 const PAN_DEFAULT_API='https://so.252035.xyz';
 const PAN_CONFIG={
   apiBase:PAN_DEFAULT_API,
-  diskTypes:['quark','baidu','uc'],
+  // 默认全类型搜索：避免资源只在阿里/123/115/磁力等盘时被前端过滤掉（用户仍可在设置里自选）
+  diskTypes:['quark','aliyun','baidu','uc','tianyi','xunlei','123','115','mobile','guangya','magnet','ed2k'],
   panChannels:[],
   panPlugins:[]
 };
@@ -7987,7 +7988,18 @@ async function panReq(path,body){
   return await resp.json();
 }
 
-async function panSearch(kw){
+/* 单次盘搜请求（base 为空时用当前选中的盘搜地址） */
+async function panSearch(kw, base){
+  const _prevBase=PAN_CONFIG.apiBase;
+  if(base) PAN_CONFIG.apiBase=String(base).replace(/\/+$/,'');
+  try{
+    return await panSearchOnce(kw);
+  }finally{
+    PAN_CONFIG.apiBase=_prevBase;
+  }
+}
+
+async function panSearchOnce(kw){
   // 搜索前同步 TG 频道和搜索插件（不受设置页取消勾选影响）
   try{
     if(Array.isArray(PAN_SOURCE_CONFIG.channels) && PAN_SOURCE_CONFIG.channels.length){
@@ -8028,22 +8040,48 @@ async function panSearch(kw){
   dedup.sort((a,b)=>b._q-a._q||a._i-b._i); // 画质关键词命中多的靠前；命中数相同保持原有相对顺序
   return dedup;
 }
-/* 盘搜：无结果或抛错时自动重试一次（间隔约 0.7s） */
-async function panSearchWithRetry(kw){
+/* 盘搜域名池：与设置弹窗的「盘搜域名」列表保持一致（当前选中域始终最优先） */
+const PAN_DOMAIN_POOL=[
+  'https://so.252035.xyz',
+  'http://luosz.top:2000',
+  'https://panso.xxmu.top',
+  'http://sou.ooil.cn'
+];
+function panDomainPool(){
+  const list=[];
+  const add=u=>{u=String(u||'').trim().replace(/\/+$/,'');if(u&&list.indexOf(u)===-1)list.push(u);};
   try{
-    let list=await panSearch(kw);
-    if(list&&list.length) return list;
-    await new Promise(r=>setTimeout(r,700));
-    list=await panSearch(kw);
-    return list||[];
-  }catch(e1){
-    await new Promise(r=>setTimeout(r,700));
+    document.querySelectorAll('#panUrlHistory .pan-url-item').forEach(el=>add(el.textContent));
+  }catch(e){}
+  PAN_DOMAIN_POOL.forEach(add);
+  add(PAN_CONFIG.apiBase);
+  add(PAN_DEFAULT_API);
+  return list;
+}
+/* 盘搜：当前选中域无结果或请求失败时，自动依次尝试其他盘搜域名，任一域有结果即返回；
+   全部域都请求失败才抛错（界面提示「盘搜失败」），有响应但都无结果则返回空列表 */
+async function panSearchWithRetry(kw,onProgress){
+  const pool=panDomainPool();
+  const cur=PAN_CONFIG.apiBase;
+  const order=[cur].concat(pool.filter(d=>d!==cur));
+  let lastErr=null, anyOk=false;
+  for(let i=0;i<order.length;i++){
+    const d=order[i];
+    if(typeof onProgress==='function'){ try{ onProgress(d,i,order.length); }catch(e){} }
     try{
-      return await panSearch(kw);
-    }catch(e2){
-      throw e2||e1;
-    }
+      let list=await panSearch(kw,d);
+      anyOk=true;
+      if(list&&list.length)return list;
+      if(i===0){ // 当前选中域按旧逻辑多重试一次，抵御偶发 400/超时
+        await new Promise(r=>setTimeout(r,700));
+        list=await panSearch(kw,d);
+        if(list&&list.length)return list;
+      }
+    }catch(e){lastErr=e;}
+    if(i<order.length-1)await new Promise(r=>setTimeout(r,400));
   }
+  if(!anyOk&&lastErr)throw lastErr;
+  return [];
 }
 
 // 画质/版本关键词打分：标题里命中的关键词越多，分数越高，排序越靠前
@@ -8079,7 +8117,8 @@ function panTypesPresent(list){
 function renderPanSearchBox(box,allList,activeType){
   if(!box)return;
   if(!allList.length){
-    box.innerHTML='<div class="pan-search-status">未搜索到网盘资源</div>';
+    let _n=0; try{_n=panDomainPool().length;}catch(e){}
+    box.innerHTML='<div class="pan-search-status">未搜索到网盘资源'+( _n>1?'（已尝试 '+_n+' 个盘搜源）':'')+'</div>';
     return;
   }
   const types=panTypesPresent(allList);
@@ -8206,7 +8245,10 @@ let _panToken=0;
 function startPanSearch(box,kw,onResult){
   const tk=++_panToken;
   box.innerHTML='<div class="pan-search-status">正在聚合搜索网盘…</div>';
-  panSearchWithRetry(kw).then(list=>{
+  panSearchWithRetry(kw,function(d,i,n){
+    if(tk!==_panToken)return;
+    box.innerHTML='<div class="pan-search-status">正在搜索盘搜源 '+(i+1)+'/'+n+'：'+esc(d)+'</div>';
+  }).then(list=>{
     if(tk!==_panToken)return;
     renderPanSearchBox(box,list,'');
     if(typeof onResult==='function'){ try{ onResult(list); }catch(e){} }
