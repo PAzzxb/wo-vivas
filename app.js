@@ -2611,28 +2611,7 @@ function hdhiveToCard(it,s){
 async function hdhiveList(s,cat,pg){const items=await hdhiveLoadCatalog(s);const f=hdhiveFilter(items,cat);const size=(s.pageSize||24)|0;const page=Math.max(1,pg|0);return f.slice((page-1)*size,page*size).map(it=>hdhiveToCard(it,s))}
 async function hdhiveSearchList(s,q){return hdhiveSearch(await hdhiveLoadCatalog(s),q).slice(0,40).map(it=>hdhiveToCard(it,s))}
 
-  all:[
-    {ep:'discover/tv',mt:'tv',p:{with_original_language:'zh',with_origin_country:'CN',without_genres:'10764,10766,10767',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-90',first_air_date_lte:'today+7',vote_count_gte:'2'}},
-    {ep:'discover/movie',mt:'movie',p:{with_original_language:'zh',sort_by:'popularity.desc',primary_release_date_gte:'today-90',primary_release_date_lte:'today+7',vote_count_gte:'2'}},
-    {ep:'movie/now_playing',mt:'movie',p:{language:'zh-CN'}},
-    {ep:'discover/movie',mt:'movie',p:{with_original_language:'zh',sort_by:'popularity.desc',primary_release_date_gte:'today-60',primary_release_date_lte:'today+3',vote_count_gte:'5',language:'zh-CN'}},
-    {ep:'discover/tv',mt:'tv',p:{with_original_language:'en',with_origin_country:'US|GB',without_genres:'10764,10767,10766,16',with_watch_providers:'8|337|350|384|9|15|386|531',watch_region:'US',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-60',first_air_date_lte:'today+7'}},
-    {ep:'discover/movie',mt:'movie',p:{with_original_language:'en',with_watch_providers:'8|337|350|384|9|15|386|531',watch_region:'US',sort_by:'popularity.desc',primary_release_date_gte:'today-90',primary_release_date_lte:'today+7',vote_count_gte:'5'}},
-    {ep:'discover/tv',mt:'tv',p:{with_original_language:'ko',with_origin_country:'KR',without_genres:'10764,10767,10766,16',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-60',first_air_date_lte:'today+7'}},
-    {ep:'discover/tv',mt:'tv',p:{with_original_language:'ja',with_origin_country:'JP',without_genres:'10764,10767,10766,16',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-60',first_air_date_lte:'today+7'}}
-  ],
-  'cn-tv':[{ep:'discover/tv',mt:'tv',p:{with_original_language:'zh',with_origin_country:'CN',without_genres:'10764,10766,10767',with_type:'4',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-180',first_air_date_lte:'today+7'}}],
-  'movie-cn':[{ep:'discover/movie',mt:'movie',p:{with_original_language:'zh',sort_by:'popularity.desc',primary_release_date_gte:'today-90',primary_release_date_lte:'today',vote_count_gte:'2',language:'zh-CN'}}],
-  'movie-foreign':[{ep:'discover/movie',mt:'movie',p:{with_original_language:'en',sort_by:'popularity.desc',primary_release_date_gte:'today-90',primary_release_date_lte:'today+7',vote_count_gte:'5',language:'zh-CN'}}],
-  'jp-kr-tv':[{ep:'discover/tv',mt:'tv',p:{with_original_language:'ko',sort_by:'first_air_date.desc',first_air_date_gte:'today-120',first_air_date_lte:'today+60',include_null_first_air_dates:'false',without_genres:'16,99'}}],
-  'hk-tw-tv':[{ep:'discover/tv',mt:'tv',p:{with_original_language:'zh',with_origin_country:'HK',without_genres:'10764,10766,10767,16',sort_by:'first_air_date.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-180',first_air_date_lte:'today+14'}}],
-  'us-tv':[{ep:'discover/tv',mt:'tv',p:{with_original_language:'en',with_origin_country:'US|GB',without_genres:'16,10764,10767',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-180',first_air_date_lte:'today+30',vote_count_gte:'30'}}],
-  'variety-cn':[{ep:'discover/tv',mt:'tv',p:{with_genres:'10764',with_original_language:'zh',with_origin_country:'CN',sort_by:'first_air_date.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-180',first_air_date_lte:'today+60'}}],
-  'anime':[{ep:'discover/tv',mt:'tv',p:{with_genres:'16',with_original_language:'ja',with_origin_country:'JP',sort_by:'popularity.desc',include_null_first_air_dates:'false',first_air_date_gte:'today-720',first_air_date_lte:'today+30'}}],
-  'documentary':[{ep:'discover/movie',mt:'movie',p:{with_genres:'99',sort_by:'popularity.desc',vote_count_gte:'50',language:'zh-CN'}}]
-};
-
-function hdhiveDetailFromItem(v){
+  function hdhiveDetailFromItem(v){
   const it=v&&v._hdhive; if(!it) return {info:{title:v&&v.title||'',pic:v&&v.pic||'',desc:'',siteName:'鸟巢'},pans:[]};
   const pans=[],seen=new Set();
   for(const sh of it.shares||[]){const u=String(sh.u||'').trim();if(!u||seen.has(u))continue;seen.add(u);const type=hdhivePanLabel(sh.d);const note=(typeof clean==='function'?clean(sh.m||''):(sh.m||''));const grp=(typeof clean==='function'?clean(sh.g||''):(sh.g||''));pans.push({name:type+(note?(' · '+note):'')+(grp?(' · '+grp):''),url:u,type,siteName:'鸟巢',password:sh.p||''})}
